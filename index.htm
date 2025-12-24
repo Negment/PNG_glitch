@@ -2,18 +2,15 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG Destroyer v13</title>
+    <title>PNG Destroyer v14</title>
     <style>
         :root { --accent: #00ff00; --bg: #000; --panel: #111; --text: #eee; }
         body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; overflow: hidden; }
         .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 10px 0 30px #000; z-index: 10; }
         .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #080808; padding: 10px; }
         h1 { font-size: 1.2rem; border-left: 5px solid var(--accent); padding-left: 12px; margin: 0; color: var(--accent); letter-spacing: 2px; }
-        
-        /* Master Control Styling */
         .master-group { background: #1a0000; border: 2px solid var(--accent); padding: 15px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
         .master-label { font-size: 11px; font-weight: 900; color: #fff !important; text-transform: uppercase; letter-spacing: 3px; }
-        
         .group { background: #0a0a0a; border: 1px solid #222; padding: 10px; border-radius: 2px; }
         .group-title { font-weight: bold; margin-bottom: 8px; color: #666; border-bottom: 1px solid #333; padding-bottom: 4px; text-transform: uppercase; font-size: 9px; }
         .ctrl-row { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
@@ -33,23 +30,17 @@
 
 <div class="sidebar">
     <h1>PNG DESTROYER</h1>
-    <div style="font-size:9px; color:#444; margin-bottom:10px;">SIGNAL_AUTHORITY_V13</div>
-    
+    <div style="font-size:9px; color:#444; margin-bottom:10px;">LOOP_SYNC_V14.0</div>
     <input type="file" id="upload" accept="image/*">
-    
     <div class="master-group">
-        <div class="ctrl-row">
-            <label class="master-label">Global Corruption <span class="val" id="v-master">0</span>%</label>
-        </div>
+        <div class="ctrl-row"><label class="master-label">Global Corruption <span class="val" id="v-master">0</span>%</label></div>
         <input type="range" id="master" min="0" max="100" value="0" step="1">
     </div>
-
     <div class="btn-row">
         <button id="random">RANDOM</button>
         <button id="reset-all">RESET ALL</button>
         <button id="download">SAVE PNG</button>
     </div>
-
     <div id="controls"></div>
 </div>
 
@@ -93,8 +84,7 @@
         if(d.c !== currentCat){
             currentCat = d.c;
             const title = document.createElement('div');
-            title.className = 'group-title';
-            title.innerText = d.c;
+            title.className = 'group-title'; title.innerText = d.c;
             controlContainer.appendChild(title);
         }
         const box = document.createElement('div');
@@ -128,8 +118,7 @@
     });
 
     document.getElementById('reset-all').onclick = () => {
-        document.getElementById('master').value = 0;
-        masterPower = 0;
+        document.getElementById('master').value = 0; masterPower = 0;
         document.getElementById('v-master').innerText = 0;
         defs.forEach(d => resetParam(d.id, d.d));
     };
@@ -146,8 +135,7 @@
     };
 
     document.getElementById('upload').onchange = (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
+        const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
@@ -166,13 +154,16 @@
         canvas.toBlob((blob) => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `PNG_DESTROYER_V13_${Date.now()}.png`;
+            link.download = `PNG_DESTROYER_V14_${Date.now()}.png`;
             link.click();
         }, 'image/png');
     };
 
+    // ヘルパー: 座標x, yを画像サイズw, hに回り込ませ、RGBA配列の先頭インデックスを返す
     function getIdx(x, y, w, h) {
-        return ((y + h) % h * w + (x + w) % w) * 4;
+        const nx = (Math.floor(x) % w + w) % w;
+        const ny = (Math.floor(y) % h + h) % h;
+        return (ny * w + nx) * 4;
     }
 
     function applyGlitch() {
@@ -180,38 +171,37 @@
         const { width, height, data } = originalImageData;
         const out = new ImageData(new Uint8ClampedArray(data), width, height);
 
-        // マスター制御用の「実効値」を計算
-        const getVal = (id, defVal) => {
-            const current = cfg[id];
-            // 初期値からの「変化量」に対してマスター出力を掛ける
-            return defVal + (current - defVal) * masterPower;
-        };
-
         const eff = {};
-        defs.forEach(d => eff[d.id] = getVal(d.id, d.d));
+        defs.forEach(d => {
+            const current = cfg[d.id];
+            eff[d.id] = d.d + (current - d.d) * masterPower;
+        });
 
+        // PASS 1: Horizontal & Binary Reconstruction (Slide, Skew, Sync, Filters)
         for (let y = 0; y < height; y++) {
             if (Math.random() * 100 > eff.prob) continue;
 
-            const skew = Math.floor(y * (eff.skew / 10));
+            const skew = y * (eff.skew / 10);
             const sync = (y % 2 === 0) ? eff.sync : -eff.sync;
             const xShift = (Math.floor(y / eff.chunk) % 2 === 0) ? eff.slide : 0;
-            const totalShift = Math.floor(xShift + skew + sync);
+            const totalShift = xShift + skew + sync;
 
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
                 const ti = getIdx(x + totalShift, y, width, height);
+                
                 let r = data[ti], g = data[ti+1], b = data[ti+2];
 
+                // Stability (PNG Filter) - Loop neighboring calculated pixels
                 if (eff.stable > 0) {
-                    const pi = getIdx(x, y - 1, width, height);
                     const s = (eff.stable + (Math.random()-0.5)*eff.stableJ)/100;
+                    const piX = getIdx(x - 1, y, width, height);
+                    const piY = getIdx(x, y - 1, width, height);
                     let rr, rg, rb;
-                    const piX = getIdx(x-1,y,width,height);
                     if(cfg.type==1) { rr=out.data[piX]; rg=out.data[piX+1]; rb=out.data[piX+2]; }
-                    else if(cfg.type==2) { rr=out.data[pi]; rg=out.data[pi+1]; rb=out.data[pi+2]; }
-                    else if(cfg.type==3) { rr=(out.data[pi]+out.data[piX])/2; rg=(out.data[pi+1]+out.data[piX+1])/2; rb=(out.data[pi+2]+out.data[piX+2])/2; }
-                    else { rr=Math.abs(out.data[pi]-out.data[piX]); rg=Math.abs(out.data[pi+1]-out.data[piX+1]); rb=Math.abs(out.data[pi+2]-out.data[piX+2]); }
+                    else if(cfg.type==2) { rr=out.data[piY]; rg=out.data[piY+1]; rb=out.data[piY+2]; }
+                    else if(cfg.type==3) { rr=(out.data[piY]+out.data[piX])/2; rg=(out.data[piY+1]+out.data[piX+1])/2; rb=(out.data[piY+2]+out.data[piX+2])/2; }
+                    else { rr=Math.abs(out.data[piY]-out.data[piX]); rg=Math.abs(out.data[piY+1]-out.data[piX+1]); rb=Math.abs(out.data[piY+2]-out.data[piX+2]); }
                     r = (r + rr * s) % 256; g = (g + rg * s) % 256; b = (b + rb * s) % 256;
                 }
 
@@ -224,27 +214,34 @@
             }
         }
 
+        // PASS 2: Vertical & Sorting (Melt, Sort, RGB, Ghost)
         const temp = new Uint8ClampedArray(out.data);
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
-                if (eff.melt > 0 && y > 0) {
-                    const up = getIdx(x, y-1, width, height);
+
+                // Acid Melt - Loops vertically
+                if (eff.melt > 0) {
+                    const up = getIdx(x, y - 1, width, height);
                     if (Math.abs(temp[i] - out.data[up]) < eff.melt) {
                         out.data[i]=out.data[up]; out.data[i+1]=out.data[up+1]; out.data[i+2]=out.data[up+2];
                     }
                 }
-                if (eff.sort > 0 && x > 0) {
-                    const pi = i - 4;
-                    if (Math.abs(out.data[i] - out.data[pi]) < eff.sort) {
-                        out.data[i]=out.data[pi]; out.data[i+1]=out.data[pi+1]; out.data[i+2]=out.data[pi+2];
+                // Sort - Loops horizontally
+                if (eff.sort > 0) {
+                    const prev = getIdx(x - 1, y, width, height);
+                    if (Math.abs(out.data[i] - out.data[prev]) < eff.sort) {
+                        out.data[i]=out.data[prev]; out.data[i+1]=out.data[prev+1]; out.data[i+2]=out.data[prev+2];
                     }
                 }
+                // RGB / Ghost / Shuffle - Fully looped
                 if (eff.rgb > 0 || eff.echo > 0 || cfg.shuffle > 0) {
-                    const ri = getIdx(x + Math.floor(eff.rgb), y - Math.floor(eff.echo/2), width, height);
-                    const bi = getIdx(x - Math.floor(eff.rgb), y, width, height);
+                    const shiftX = Math.floor(eff.rgb);
+                    const shiftY = Math.floor(eff.echo / 2);
+                    const ri = getIdx(x + shiftX, y - shiftY, width, height);
+                    const bi = getIdx(x - shiftX, y, width, height);
                     let r = temp[ri], g = temp[i+1], b = temp[bi+2];
-                    if (cfg.shuffle > 0) { // Shuffleは段階的な変化が難しいためマスターが1%以上なら適用
+                    if (cfg.shuffle > 0) {
                         let c = [r, g, b];
                         if (cfg.shuffle == 1) c = [r, b, g]; else if (cfg.shuffle == 2) c = [g, r, b];
                         else if (cfg.shuffle == 3) c = [g, b, r]; else if (cfg.shuffle == 4) c = [b, r, g];
