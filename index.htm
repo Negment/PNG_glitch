@@ -2,82 +2,135 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG Destroyer v10</title>
+    <title>PNG Destroyer v11</title>
     <style>
         :root { --accent: #ff0044; --bg: #030303; --panel: #111; --text: #ddd; }
         body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; overflow: hidden; }
         
-        .sidebar { width: 420px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 10px 0 30px rgba(0,0,0,0.7); z-index: 10; }
+        .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 10px 0 30px rgba(0,0,0,0.7); z-index: 10; }
         .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 10px; position: relative; }
         
         h1 { font-size: 1.3rem; border-left: 5px solid var(--accent); padding-left: 12px; margin: 0; letter-spacing: 2px; color: var(--accent); font-weight: 900; }
-        .version { font-size: 9px; color: #555; margin-bottom: 10px; }
+        .version { font-size: 9px; color: #555; margin-bottom: 5px; }
 
         .group { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 10px; border-radius: 2px; }
         .group-title { font-weight: bold; margin-bottom: 8px; color: #666; border-bottom: 1px solid #222; padding-bottom: 4px; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; }
         
-        label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; color: #999; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 6px 0 10px 0; }
+        .ctrl-row { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+        label { flex-grow: 1; display: flex; justify-content: space-between; color: #999; margin-right: 5px; }
+        .reset-mini { background: #222; color: #666; border: none; font-size: 8px; cursor: pointer; padding: 2px 4px; border-radius: 2px; }
+        .reset-mini:hover { background: var(--accent); color: #000; }
+
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 4px 0 8px 0; }
         
         canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; box-shadow: 0 0 60px rgba(255,0,0,0.15); }
-        .val { color: var(--accent); font-weight: bold; font-family: monospace; background: #1a1a1a; padding: 1px 4px; border-radius: 2px; }
+        .val { color: var(--accent); font-weight: bold; font-family: monospace; background: #1a1a1a; padding: 1px 4px; border-radius: 2px; min-width: 25px; text-align: center; }
         
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 5px; }
-        button { background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; transition: 0.1s; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px; }
+        button { background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; cursor: pointer; font-family: inherit; font-size: 9px; font-weight: bold; text-transform: uppercase; }
         button:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        #reset-all { border-color: #555; color: #888; }
         
         input[type="file"] { font-size: 9px; color: #555; background: #000; padding: 8px; border: 1px solid #222; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
-        .danger { color: #ff0044; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h1>PNG DESTROYER</h1>
-    <div class="version">BUILD: SIGNAL_DEAD_V10.0</div>
+    <div class="version">FULL_RECON_V11.0</div>
     
     <input type="file" id="upload" accept="image/*">
     <div class="btn-row">
-        <button id="random">RANDOMIZE</button>
-        <button id="download">SAVE_RESULT</button>
+        <button id="random">RANDOM</button>
+        <button id="reset-all">RESET ALL</button>
+        <button id="download">SAVE PNG</button>
     </div>
 
-    <div class="group">
-        <div class="group-title">Geometry: Signal Tear</div>
-        <label>Stride Skew <span class="val" id="v-skew">0</span></label>
-        <input type="range" id="skew" min="-100" max="100" value="0">
-        <label>Block Slide <span class="val" id="v-slide">0</span></label>
-        <input type="range" id="slide" min="0" max="1000" value="0">
-        <label>Sync Loss (Interlace) <span class="val" id="v-sync">0</span></label>
-        <input type="range" id="sync" min="0" max="200" value="0">
-    </div>
+    <div class="group" id="controls">
+        <div class="group-title">1. System / PNG Filter</div>
+        <div class="param-box" data-p="prob" data-def="100">
+            <div class="ctrl-row"><label>Probability <span class="val">100</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="100" value="100">
+        </div>
+        <div class="param-box" data-p="type" data-def="1">
+            <div class="ctrl-row"><label>Filter Type (0-4) <span class="val">1</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="4" value="1">
+        </div>
+        <div class="param-box" data-p="stable" data-def="0">
+            <div class="ctrl-row"><label>Stability <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="300" value="0">
+        </div>
+        <div class="param-box" data-p="stableJ" data-def="0">
+            <div class="ctrl-row"><label>Stability Jitter <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="200" value="0">
+        </div>
 
-    <div class="group">
-        <div class="group-title">Color: Chromatic Decay</div>
-        <label>Ghosting (Echo) <span class="val" id="v-echo">0</span></label>
-        <input type="range" id="echo" min="0" max="100" value="0">
-        <label>Bit Rot (Crush) <span class="val" id="v-crush">0</span></label>
-        <input type="range" id="crush" min="0" max="7" value="0">
-        <label>RGB Split Loop <span class="val" id="v-rgb">0</span></label>
-        <input type="range" id="rgb" min="0" max="300" value="0">
-    </div>
+        <div class="group-title">2. Spatial / Stride</div>
+        <div class="param-box" data-p="skew" data-def="0">
+            <div class="ctrl-row"><label>Stride Skew <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="-100" max="100" value="0">
+        </div>
+        <div class="param-box" data-p="slide" data-def="0">
+            <div class="ctrl-row"><label>Square Slide <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="1000" value="0">
+        </div>
+        <div class="param-box" data-p="slideJ" data-def="0">
+            <div class="ctrl-row"><label>Slide Jitter <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="1000" value="0">
+        </div>
+        <div class="param-box" data-p="chunk" data-def="10">
+            <div class="ctrl-row"><label>Chunk Size <span class="val">10</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="1" max="500" value="10">
+        </div>
+        <div class="param-box" data-p="sync" data-def="0">
+            <div class="ctrl-row"><label>Sync Loss <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="200" value="0">
+        </div>
 
-    <div class="group">
-        <div class="group-title">Logic: Binary Overflow</div>
-        <label>Overflow (Modulo) <span class="val" id="v-mult">1</span></label>
-        <input type="range" id="mult" min="1" max="10" value="1" step="0.1">
-        <label>XOR Bit Noise <span class="val" id="v-bit">0</span></label>
-        <input type="range" id="bit" min="0" max="8" value="0">
-        <label>Stability <span class="val" id="v-stable">0</span></label>
-        <input type="range" id="stable" min="0" max="300" value="0">
-    </div>
+        <div class="group-title">3. Color / Signal</div>
+        <div class="param-box" data-p="rgb" data-def="0">
+            <div class="ctrl-row"><label>RGB Split <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="300" value="0">
+        </div>
+        <div class="param-box" data-p="shuffle" data-def="0">
+            <div class="ctrl-row"><label>Channel Shuffle <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="5" value="0" step="1">
+        </div>
+        <div class="param-box" data-p="echo" data-def="0">
+            <div class="ctrl-row"><label>Ghost Echo <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="100" value="0">
+        </div>
+        <div class="param-box" data-p="crush" data-def="0">
+            <div class="ctrl-row"><label>Bit Rot (Crush) <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="7" value="0">
+        </div>
 
-    <div class="group">
-        <div class="group-title">Melt: Acid Erosion</div>
-        <label class="danger">Acid Melt (Vertical) <span class="val" id="v-melt">0</span></label>
-        <input type="range" id="melt" min="0" max="255" value="0">
-        <label>Sort Threshold <span class="val" id="v-sort">0</span></label>
-        <input type="range" id="sort" min="0" max="255" value="0">
+        <div class="group-title">4. Logic / Melt</div>
+        <div class="param-box" data-p="mult" data-def="1">
+            <div class="ctrl-row"><label>Overflow (Mult) <span class="val">1</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="1" max="10" value="1" step="0.1">
+        </div>
+        <div class="param-box" data-p="bit" data-def="0">
+            <div class="ctrl-row"><label>XOR Bit Noise <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="8" value="0">
+        </div>
+        <div class="param-box" data-p="melt" data-def="0">
+            <div class="ctrl-row"><label>Acid Melt <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="255" value="0">
+        </div>
+        <div class="param-box" data-p="sort" data-def="0">
+            <div class="ctrl-row"><label>Sort Threshold <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="255" value="0">
+        </div>
+        <div class="param-box" data-p="void" data-def="0">
+            <div class="ctrl-row"><label>Void Offset <span class="val">0</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="-255" max="255" value="0">
+        </div>
+        <div class="param-box" data-p="inv" data-def="255">
+            <div class="ctrl-row"><label>Death Threshold <span class="val">255</span></label><button class="reset-mini">R</button></div>
+            <input type="range" min="0" max="255" value="255">
+        </div>
     </div>
 </div>
 
@@ -90,15 +143,51 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let originalImageData = null;
 
-    const params = ['skew', 'slide', 'sync', 'echo', 'crush', 'rgb', 'mult', 'bit', 'stable', 'melt', 'sort'];
-    const els = {};
-    params.forEach(p => {
-        els[p] = document.getElementById(p);
-        els[p].oninput = () => {
-            document.getElementById(`v-${p}`).innerText = els[p].value;
+    const paramBoxes = document.querySelectorAll('.param-box');
+    const cfg = {};
+
+    // 初期化とイベント紐付け
+    paramBoxes.forEach(box => {
+        const p = box.dataset.p;
+        const input = box.querySelector('input');
+        const valDisp = box.querySelector('.val');
+        const resetBtn = box.querySelector('.reset-mini');
+
+        const update = () => {
+            cfg[p] = parseFloat(input.value);
+            valDisp.innerText = input.value;
             applyGlitch();
         };
+
+        input.oninput = update;
+        resetBtn.onclick = () => {
+            input.value = box.dataset.def;
+            update();
+        };
+        cfg[p] = parseFloat(input.value);
     });
+
+    document.getElementById('reset-all').onclick = () => {
+        paramBoxes.forEach(box => {
+            const input = box.querySelector('input');
+            input.value = box.dataset.def;
+            box.querySelector('.val').innerText = input.value;
+            cfg[box.dataset.p] = parseFloat(input.value);
+        });
+        applyGlitch();
+    };
+
+    document.getElementById('random').onclick = () => {
+        paramBoxes.forEach(box => {
+            const input = box.querySelector('input');
+            const min = parseFloat(input.min), max = parseFloat(input.max);
+            const step = parseFloat(input.step) || 1;
+            input.value = (Math.floor(Math.random() * ((max - min) / step + 1)) * step + min).toFixed(1);
+            box.querySelector('.val').innerText = input.value;
+            cfg[box.dataset.p] = parseFloat(input.value);
+        });
+        applyGlitch();
+    };
 
     document.getElementById('upload').onchange = (e) => {
         const file = e.target.files[0];
@@ -117,20 +206,11 @@
         reader.readAsDataURL(file);
     };
 
-    document.getElementById('random').onclick = () => {
-        params.forEach(p => {
-            const min = parseFloat(els[p].min), max = parseFloat(els[p].max);
-            els[p].value = (Math.random() * (max - min) + min).toFixed(1);
-            document.getElementById(`v-${p}`).innerText = els[p].value;
-        });
-        applyGlitch();
-    };
-
     document.getElementById('download').onclick = () => {
         canvas.toBlob((blob) => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `PNG_DESTROYER_V10_${Date.now()}.png`;
+            link.download = `DESTROY_V11_${Date.now()}.png`;
             link.click();
         }, 'image/png');
     };
@@ -143,16 +223,16 @@
         if (!originalImageData) return;
         const { width, height, data } = originalImageData;
         const out = new ImageData(new Uint8ClampedArray(data), width, height);
-        const cfg = {};
-        params.forEach(p => cfg[p] = parseFloat(els[p].value));
 
-        // PASS 1: Spatial & Logical Destruction
+        // PASS 1: Base Destruction & Looping Slide
         for (let y = 0; y < height; y++) {
-            // Stride Skew & Interlace Sync Loss logic
+            if (Math.random() * 100 > cfg.prob) continue;
+
             const syncOffset = (y % 2 === 0) ? cfg.sync : -cfg.sync;
             const skewOffset = Math.floor(y * (cfg.skew / 10));
-            const xBaseShift = (Math.floor(y / 10) % 2 === 0) ? cfg.slide : 0;
-            const totalXShift = xBaseShift + skewOffset + syncOffset;
+            const slideVal = cfg.slide + (Math.random() - 0.5) * cfg.slideJ;
+            const xBaseShift = (Math.floor(y / cfg.chunk) % 2 === 0) ? slideVal : 0;
+            const totalXShift = Math.floor(xBaseShift + skewOffset + syncOffset);
 
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
@@ -160,64 +240,62 @@
                 
                 let r = data[ti], g = data[ti+1], b = data[ti+2];
 
-                // Stability (PNG Filter logic)
-                if (cfg.stable > 0 && y > 0) {
-                    const pi = getIdx(x, y - 1, width, height);
-                    const refR = out.data[pi], refG = out.data[pi+1], refB = out.data[pi+2];
-                    r = (r + refR * (cfg.stable/100)) % 256;
-                    g = (g + refG * (cfg.stable/100)) % 256;
-                    b = (b + refB * (cfg.stable/100)) % 256;
+                // Stability (PNG Filter)
+                if (cfg.stable > 0 && (y > 0 || x > 0)) {
+                    const cStab = (cfg.stable + (Math.random() - 0.5) * cfg.stableJ) / 100;
+                    const piX = getIdx(x - 1, y, width, height);
+                    const piY = getIdx(x, y - 1, width, height);
+                    let dr, dg, db;
+                    if(cfg.type==1){ dr=out.data[piX]; dg=out.data[piX+1]; db=out.data[piX+2]; }
+                    else if(cfg.type==2){ dr=out.data[piY]; dg=out.data[piY+1]; db=out.data[piY+2]; }
+                    else if(cfg.type==3){ dr=(out.data[piX]+out.data[piY])/2; dg=(out.data[piX+1]+out.data[piY+1])/2; db=(out.data[piX+2]+out.data[piY+2])/2; }
+                    else if(cfg.type==4){ dr=Math.abs(out.data[piX]-out.data[piY]); dg=Math.abs(out.data[piX+1]-out.data[piY+1]); db=Math.abs(out.data[piX+2]-out.data[piY+2]); }
+                    else {dr=0; dg=0; db=0;}
+                    r = (r + dr * cStab) % 256; g = (g + dg * cStab) % 256; b = (b + db * cStab) % 256;
                 }
 
-                // Modulo Chaos (Overflow)
-                if (cfg.mult !== 1) {
-                    r = (r * cfg.mult) % 256;
-                    g = (g * cfg.mult) % 256;
-                    b = (b * cfg.mult) % 256;
-                }
-
-                // Bit Rot (Crush)
-                if (cfg.crush > 0) {
-                    const mask = 0xFF << cfg.crush;
-                    r &= mask; g &= mask; b &= mask;
-                }
-
-                // XOR Bit Noise
+                // Bit/Logic ops
+                if (cfg.mult !== 1) { r = (r * cfg.mult) % 256; g = (g * cfg.mult) % 256; b = (b * cfg.mult) % 256; }
+                if (cfg.crush > 0) { const m = 0xFF << cfg.crush; r &= m; g &= m; b &= m; }
                 if (cfg.bit > 0) { r ^= (r >> cfg.bit); g ^= (g >> cfg.bit); b ^= (b >> cfg.bit); }
 
+                // Pixel Sort (Horizontal)
+                if (cfg.sort > 0 && x > 0) {
+                    const pi = i - 4;
+                    if (Math.abs(r - out.data[pi]) < cfg.sort) { r = out.data[pi]; g = out.data[pi+1]; b = out.data[pi+2]; }
+                }
+
+                r += cfg.void; g += cfg.void; b += cfg.void;
+                if (r > cfg.inv) r = 255 - r; if (g > cfg.inv) g = 255 - g; if (b > cfg.inv) b = 255 - b;
                 out.data[i] = r; out.data[i+1] = g; out.data[i+2] = b; out.data[i+3] = 255;
             }
         }
 
-        // PASS 2: Acid Melt & Post Effects
+        // PASS 2: Acid Melt & RGB Corruption
         const temp = new Uint8ClampedArray(out.data);
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
-
-                // Acid Melt (Vertical Pixel Sort)
                 if (cfg.melt > 0 && y > 0) {
                     const up = getIdx(x, y - 1, width, height);
-                    const brightness = (temp[i] + temp[i+1] + temp[i+2]) / 3;
-                    const upBrightness = (out.data[up] + out.data[up+1] + out.data[up+2]) / 3;
-                    if (Math.abs(brightness - upBrightness) < cfg.melt) {
-                        out.data[i] = out.data[up];
-                        out.data[i+1] = out.data[up+1];
-                        out.data[i+2] = out.data[up+2];
+                    if (Math.abs(temp[i] - out.data[up]) < cfg.melt) {
+                        out.data[i] = out.data[up]; out.data[i+1] = out.data[up+1]; out.data[i+2] = out.data[up+2];
                     }
                 }
-
-                // Ghosting (Echo) & RGB Split
-                if (cfg.echo > 0 || cfg.rgb > 0) {
-                    const echoY = Math.floor(y - (cfg.echo / 2));
-                    const shiftX = Math.floor(cfg.rgb);
-                    
-                    const ri = getIdx(x + shiftX, echoY, width, height);
-                    const bi = getIdx(x - shiftX, y, width, height);
-                    
-                    // Rに過去(Echo)のBを混ぜるような混線
-                    out.data[i] = (out.data[i] * 0.6 + temp[ri] * 0.4);
-                    out.data[i+2] = (out.data[i+2] * 0.6 + temp[bi+2] * 0.4);
+                if (cfg.rgb > 0 || cfg.echo > 0 || cfg.shuffle > 0) {
+                    const eY = Math.floor(y - (cfg.echo / 2));
+                    const sX = Math.floor(cfg.rgb);
+                    const ri = getIdx(x + sX, eY, width, height);
+                    const bi = getIdx(x - sX, y, width, height);
+                    let r = temp[ri], g = temp[i+1], b = temp[bi+2];
+                    if (cfg.shuffle > 0) {
+                        let c = [r, g, b];
+                        if (cfg.shuffle == 1) c = [r, b, g]; else if (cfg.shuffle == 2) c = [g, r, b];
+                        else if (cfg.shuffle == 3) c = [g, b, r]; else if (cfg.shuffle == 4) c = [b, r, g];
+                        else if (cfg.shuffle == 5) c = [b, g, r];
+                        r = c[0]; g = c[1]; b = c[2];
+                    }
+                    out.data[i] = r; out.data[i+1] = g; out.data[i+2] = b;
                 }
             }
         }
