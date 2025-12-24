@@ -2,30 +2,37 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG destroyer</title>
+    <title>VOID_SYSTEM_V6 // GITHUB_READY</title>
     <style>
-        :root { --accent: #ff00ff; --bg: #000000; --panel: #0a0a0a; }
+        :root { --accent: #00ffff; --bg: #000; --panel: #111; }
         body { background: var(--bg); color: var(--accent); font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; }
-        .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 2px 0 20px rgba(255,0,255,0.1); }
-        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #111 0%, #000 100%); padding: 20px; overflow: hidden; }
-        h1 { font-size: 0.9rem; border: 1px solid var(--accent); padding: 8px; text-align: center; letter-spacing: 2px; }
-        .group { border: 1px solid #1a1a1a; padding: 10px; background: #050505; margin-bottom: 5px; }
-        label { display: flex; justify-content: space-between; margin-bottom: 4px; color: #666; }
+        .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #333; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #222 0%, #000 100%); padding: 20px; overflow: hidden; }
+        h1 { font-size: 0.9rem; border: 1px solid var(--accent); padding: 8px; text-align: center; letter-spacing: 2px; color: #fff; background: #222; }
+        .group { border: 1px solid #222; padding: 10px; background: #080808; margin-bottom: 5px; }
+        label { display: flex; justify-content: space-between; margin-bottom: 4px; color: #888; }
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 2px; margin-bottom: 8px; }
-        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; border: 1px solid #1a1a1a; }
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; border: 1px solid #333; }
         .val { color: var(--accent); font-weight: bold; }
-        button { background: #111; color: var(--accent); border: 1px solid var(--accent); padding: 8px; cursor: pointer; font-family: inherit; width: 100%; margin-top: 5px; transition: 0.3s; }
-        button:hover { background: var(--accent); color: #000; }
-        .jitter-label { color: #00ffff !important; }
-        .danger-label { color: #ff3300 !important; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button { background: #000; color: var(--accent); border: 1px solid var(--accent); padding: 10px; cursor: pointer; font-family: inherit; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        button:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent); }
+        .jitter-label { color: #ffcc00 !important; }
+        #status { font-size: 9px; color: #444; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h1>PNG destroyer</h1>
+    <h1>VOID_ENGINE_V6.0</h1>
     <input type="file" id="upload" accept="image/*">
-    <button id="download">Export PNG</button>
+    
+    <div class="btn-row">
+        <button id="random">Randomize</button>
+        <button id="download">Save PNG</button>
+    </div>
+
+    <div id="status">Ready</div>
 
     <div class="group">
         <label>System Probability <span class="val" id="v-prob">100</span>%</label>
@@ -50,15 +57,10 @@
     </div>
 
     <div class="group">
-        <label class="danger-label">Pixel Sort (色の流動) <span class="val" id="v-sort">0</span></label>
+        <label>Pixel Sort <span class="val" id="v-sort">0</span></label>
         <input type="range" id="sort" min="0" max="200" value="0">
-        <div style="font-size:8px; color:#444;">※隣接ピクセルの色を強制的に上書きし、溶けさせます</div>
-    </div>
-
-    <div class="group">
-        <label class="danger-label">Channel Shuffle <span class="val" id="v-shuffle">0</span></label>
+        <label>Channel Shuffle <span class="val" id="v-shuffle">0</span></label>
         <input type="range" id="shuffle" min="0" max="5" value="0" step="1">
-        <div style="font-size:8px; color:#444;">0:RGB, 1:RBG, 2:GRB, 3:GBR, 4:BRG, 5:BGR</div>
     </div>
 
     <div class="group">
@@ -95,11 +97,14 @@
         };
     });
 
+    // 画像読み込み
     document.getElementById('upload').onchange = (e) => {
         const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
+            img.crossOrigin = "Anonymous"; // GitHub Pages対策
             img.onload = () => {
                 canvas.width = img.width; canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
@@ -111,11 +116,33 @@
         reader.readAsDataURL(file);
     };
 
+    // 乱数ガチャボタン
+    document.getElementById('random').onclick = () => {
+        params.forEach(p => {
+            const min = parseFloat(els[p].min);
+            const max = parseFloat(els[p].max);
+            const step = parseFloat(els[p].step) || 1;
+            const rand = Math.floor(Math.random() * ((max - min) / step + 1)) * step + min;
+            els[p].value = rand;
+            document.getElementById(`v-${p}`).innerText = rand;
+        });
+        applyGlitch();
+    };
+
+    // ダウンロードボタン（改良版）
     document.getElementById('download').onclick = () => {
-        const link = document.createElement('a');
-        link.download = `void_${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        document.getElementById('status').innerText = "Exporting...";
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `VOID_${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            document.getElementById('status').innerText = "Done.";
+        }, 'image/png');
     };
 
     function applyGlitch() {
@@ -137,35 +164,28 @@
                 const i = (y * width + x) * 4;
                 const ti = (y * width + tx) * 4;
 
-                // PNG Filter logic
                 let rgb = [data[ti], data[ti+1], data[ti+2]];
                 
                 if (y > 0 && x > 0) {
                     const prevX = ((y * width + (tx - 1 + width) % width) * 4);
                     const prevY = (((y - 1) * width + tx) * 4);
-                    
                     for (let c = 0; c < 3; c++) {
                         let ref = 0;
                         if (config.type == 1) ref = out.data[prevX + c];
                         else if (config.type == 2) ref = out.data[prevY + c];
                         else if (config.type == 3) ref = (out.data[prevX + c] + out.data[prevY + c]) / 2;
                         else if (config.type == 4) ref = Math.abs(out.data[prevX + c] - out.data[prevY + c]);
-                        
                         rgb[c] = (rgb[c] + ref * (currentStable / 100)) % 256;
                     }
                 }
 
-                // Pixel Sort Simulation (強制的な色置換)
                 if (config.sort > 0 && x > 0) {
                     const prevI = i - 4;
                     if (Math.abs(rgb[0] - out.data[prevI]) < config.sort) {
-                        rgb[0] = out.data[prevI];
-                        rgb[1] = out.data[prevI+1];
-                        rgb[2] = out.data[prevI+2];
+                        rgb = [out.data[prevI], out.data[prevI+1], out.data[prevI+2]];
                     }
                 }
 
-                // Channel Shuffle
                 let finalRGB = [...rgb];
                 const s = config.shuffle;
                 if (s==1) finalRGB = [rgb[0], rgb[2], rgb[1]];
@@ -174,13 +194,10 @@
                 else if (s==4) finalRGB = [rgb[2], rgb[0], rgb[1]];
                 else if (s==5) finalRGB = [rgb[2], rgb[1], rgb[0]];
 
-                // RGB Split
                 if (config.rgb > 0) {
                     const shift = Math.floor(config.rgb);
-                    const rx = (tx + shift + width) % width;
-                    const bx = (tx - shift + width) % width;
-                    finalRGB[0] = data[(y * width + rx) * 4];
-                    finalRGB[2] = data[(y * width + bx) * 4 + 2];
+                    finalRGB[0] = data[(y * width + (tx + shift + width) % width) * 4];
+                    finalRGB[2] = data[(y * width + (tx - shift + width) % width) * 4 + 2];
                 }
 
                 for (let c = 0; c < 3; c++) {
@@ -197,4 +214,4 @@
     }
 </script>
 </body>
-</html>
+</html
