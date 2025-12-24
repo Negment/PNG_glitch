@@ -2,49 +2,69 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG Destroyer v17</title>
+    <title>PNG Destroyer v18 // AUTO-LOGIC</title>
     <style>
-        :root { --accent: #ff9900; --bg: #050505; --panel: #0a0a0a; --text: #ccc; }
+        :root { --accent: #00ffcc; --bg: #050505; --panel: #0a0a0a; --text: #889; --danger: #ff0055; }
         body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; overflow: hidden; }
-        
-        /* Sidebar & Layout */
-        .sidebar { width: 460px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; box-shadow: 5px 0 20px #000; z-index: 100; }
-        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 20px; overflow: hidden; }
-        
-        h1 { font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; margin: 0; color: #fff; letter-spacing: 2px; font-weight: 900; }
-        .ver { font-size: 9px; color: #666; margin-bottom: 5px; }
-        
-        /* Master & Omakase */
-        .master-group { background: #1a1100; border: 1px solid var(--accent); padding: 12px; border-radius: 2px; position: relative; }
-        .master-label { color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-        .recipe-name { position: absolute; top: 12px; right: 12px; font-size: 9px; color: var(--accent); font-style: italic; opacity: 0; transition: opacity 0.5s; }
-        .recipe-name.show { opacity: 1; }
 
-        .omakase-btn { 
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Sidebar & Layout */
+        .sidebar { width: 460px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; box-shadow: 5px 0 20px #000; z-index: 100; position: relative; }
+        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 20px; overflow: hidden; position: relative; }
+        
+        h1 { font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; margin: 0; color: #fff; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--accent); }
+        .ver { font-size: 9px; color: #556; margin-bottom: 5px; }
+        
+        /* Auto Gen Section */
+        .master-group { background: #001a1a; border: 1px solid var(--accent); padding: 12px; border-radius: 2px; position: relative; overflow: hidden; }
+        .master-label { color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .status-display {
+            font-size: 9px; font-family: 'Courier New', monospace; color: var(--accent);
+            margin-top: 8px; padding: 5px; background: rgba(0,0,0,0.5); border: 1px dashed #334;
+            min-height: 2.5em; white-space: pre-wrap; line-height: 1.2;
+        }
+        .blink { animation: blinker 0.1s linear infinite; color: #fff; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        .auto-btn { 
             width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; 
             font-weight: 900; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; 
-            font-family: inherit; margin-top: 5px; transition: 0.2s; position: relative; overflow: hidden;
+            font-family: inherit; margin-top: 8px; transition: 0.2s; position: relative; overflow: hidden;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 0 100%);
         }
-        .omakase-btn:hover { background: #fff; color: #000; box-shadow: 0 0 15px var(--accent); }
-        .omakase-btn::after { content:"AUTO-GENERATE"; font-size: 7px; display:block; opacity:0.6; }
+        .auto-btn:hover { background: #fff; box-shadow: 0 0 15px var(--accent); }
+        .auto-btn:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow: none; }
+        .auto-btn::after { content:"AI-ASSISTED OPTIMIZATION"; font-size: 7px; display:block; opacity:0.6; }
 
         /* Controls */
-        .group { background: #0e0e0e; border: 1px solid #222; padding: 6px 8px; }
-        .group-title { color: #666; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 4px; padding-bottom: 2px; font-size: 9px; text-transform: uppercase; }
+        .group { background: #0e0e0e; border: 1px solid #222; padding: 6px 8px; transition: 0.2s; }
+        .group.active-tune { border-color: var(--accent); background: #111; }
+        .group-title { color: #556; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 4px; padding-bottom: 2px; font-size: 9px; text-transform: uppercase; }
         .ctrl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; }
-        label { color: #999; flex-grow: 1; display: flex; justify-content: space-between; }
+        label { color: #889; flex-grow: 1; display: flex; justify-content: space-between; }
         .val { color: var(--accent); font-weight: bold; font-family: monospace; }
-        .reset-mini { background: transparent; color: #444; border: 1px solid #333; font-size: 8px; cursor: pointer; padding: 0 4px; margin-left: 5px; }
-        .reset-mini:hover { color: var(--accent); border-color: var(--accent); }
         
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 4px 0 8px 0; background: #333; }
 
-        /* General Buttons */
-        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; }
-        .sub-btn { background: #222; color: #888; border: 1px solid #444; padding: 8px; cursor: pointer; font-family: inherit; font-size: 9px; text-transform: uppercase; }
-        .sub-btn:hover { background: #333; color: #fff; }
+        /* Canvas & Overlay */
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; box-shadow: 0 0 50px rgba(0, 255, 204, 0.05); }
+        
+        .scan-line {
+            position: absolute; width: 100%; height: 2px; background: var(--accent); opacity: 0; top: 0; left: 0; pointer-events: none;
+            box-shadow: 0 0 10px var(--accent); z-index: 10;
+        }
+        .scan-active { opacity: 0.8; animation: scan 1.5s linear infinite; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
 
-        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; box-shadow: 0 0 50px rgba(255, 153, 0, 0.1); }
+        .sub-btn { background: #222; color: #888; border: 1px solid #444; padding: 8px; cursor: pointer; font-family: inherit; font-size: 9px; text-transform: uppercase; width: 48%; }
+        .sub-btn:hover { background: #333; color: #fff; }
+        .action-row { display: flex; justify-content: space-between; margin-top: 5px; }
         input[type="file"] { width: 100%; background: #000; color: #666; border: 1px solid #333; padding: 8px; box-sizing: border-box; font-size: 9px; }
     </style>
 </head>
@@ -52,29 +72,30 @@
 
 <div class="sidebar">
     <h1>PNG DESTROYER</h1>
-    <div class="ver">V17.0 // OMAKASE_ENGINE</div>
-    
+    <div class="ver">V18.2 // LOGIC_CORE_ACTIVE</div>
+
     <input type="file" id="upload" accept="image/*">
-    
+
     <div class="master-group">
         <div class="ctrl-row">
-            <span class="master-label">Master Corruption</span>
+            <span class="master-label">Core Logic</span>
             <span class="val" id="v-master">50</span>%
         </div>
-        <div id="recipe-display" class="recipe-name">Ready</div>
+        <div id="sys-status" class="status-display">SYSTEM STANDBY...</div>
         <input type="range" id="master" min="0" max="100" value="50">
-        <button class="omakase-btn" id="omakase">OMAKASE (AUTO)</button>
+        <button class="auto-btn" id="btn-auto">AUTO-GENERATE</button>
     </div>
 
     <div class="action-row">
-        <button class="sub-btn" id="reset-all">Reset All</button>
-        <button class="sub-btn" id="download">Save PNG</button>
+        <button class="sub-btn" id="reset-all">Reset Params</button>
+        <button class="sub-btn" id="download">Save Image</button>
     </div>
 
     <div id="controls"></div>
 </div>
 
 <div class="viewport">
+    <div id="scanner" class="scan-line"></div>
     <canvas id="canvas"></canvas>
 </div>
 
@@ -85,36 +106,26 @@
 
     // --- PARAMETER DEFINITIONS ---
     const defs = [
-        // 1. HARD GEOMETRY
-        {c:'1. Geometry', id:'slide',   n:'Block Shift',   d:0, min:0, max:1000, s:1},
-        {c:'1. Geometry', id:'jaggy',   n:'Sawtooth Skew', d:0, min:-100, max:100, s:1},
-        {c:'1. Geometry', id:'stutter', n:'Line Stutter',  d:0, min:0, max:50, s:1},
-        {c:'1. Geometry', id:'chunk',   n:'Block Size',    d:16, min:1, max:300, s:1},
-        
-        // 2. DATA LOSS
-        {c:'2. Data Loss',id:'prob',    n:'Err Probability',d:100, min:0, max:100, s:1},
-        {c:'2. Data Loss',id:'sync',    n:'H-Sync Loss',   d:0, min:0, max:200, s:1},
-        {c:'2. Data Loss',id:'disp',    n:'Data Displace', d:0, min:0, max:255, s:1},
-        
-        // 3. CHROMATIC
-        {c:'3. Color',    id:'rgb',     n:'RGB Offset',    d:0, min:0, max:200, s:1},
-        {c:'3. Color',    id:'hue',     n:'Hue Rotation',  d:0, min:0, max:360, s:1},
-        {c:'3. Color',    id:'flop',    n:'V-Bit Flop',    d:0, min:0, max:10, s:1},
-
-        // 4. FLOW
-        {c:'4. Flow',     id:'melt',    n:'Smart Melt (Y)',d:0, min:0, max:255, s:1},
-        {c:'4. Flow',     id:'sort',    n:'Pixel Drag (X)',d:0, min:0, max:255, s:1},
-
-        // 5. LOGIC
-        {c:'5. Logic',    id:'crush',   n:'Bit Crush',     d:0, min:0, max:7, s:1},
-        {c:'5. Logic',    id:'bit',     n:'XOR Noise',     d:0, min:0, max:8, s:1},
-        {c:'5. Logic',    id:'inv',     n:'Invert Thresh', d:255, min:0, max:255, s:1},
-        {c:'5. Logic',    id:'void',    n:'Void Level',    d:0, min:-255, max:255, s:1}
+        {c:'1. Struct', id:'slide',   n:'Block Shift',   d:0, min:0, max:1000, s:1},
+        {c:'1. Struct', id:'jaggy',   n:'Sawtooth Skew', d:0, min:-100, max:100, s:1},
+        {c:'1. Struct', id:'chunk',   n:'Block Size',    d:16, min:1, max:300, s:1},
+        {c:'2. Entropy',id:'prob',    n:'Err Probability',d:100, min:0, max:100, s:1},
+        {c:'2. Entropy',id:'sync',    n:'H-Sync Loss',   d:0, min:0, max:200, s:1},
+        {c:'3. Chromatic',id:'rgb',   n:'RGB Offset',    d:0, min:0, max:200, s:1},
+        {c:'3. Chromatic',id:'hue',   n:'Hue Rotation',  d:0, min:0, max:360, s:1},
+        {c:'4. Fluid',  id:'melt',    n:'Smart Melt (Y)',d:0, min:0, max:255, s:1},
+        {c:'4. Fluid',  id:'sort',    n:'Pixel Drag (X)',d:0, min:0, max:255, s:1},
+        {c:'5. Binary', id:'crush',   n:'Bit Crush',     d:0, min:0, max:7, s:1},
+        {c:'5. Binary', id:'bit',     n:'XOR Noise',     d:0, min:0, max:8, s:1},
+        {c:'5. Binary', id:'inv',     n:'Invert Thresh', d:255, min:0, max:255, s:1},
+        {c:'5. Binary', id:'void',    n:'Void Level',    d:0, min:-255, max:255, s:1}
     ];
 
     const cfg = {};
-    let masterPower = 0.5; // Default 50%
+    let masterPower = 0.5;
     const controlContainer = document.getElementById('controls');
+    const statusDiv = document.getElementById('sys-status');
+    const scannerDiv = document.getElementById('scanner');
 
     // --- UI GENERATION ---
     let currentCat = "";
@@ -127,16 +138,18 @@
         }
         const box = document.createElement('div');
         box.className = 'group';
+        box.id = `grp-${d.id}`;
         box.innerHTML = `
-            <div class="ctrl-row"><label>${d.n} <span class="val" id="v-${d.id}">${d.d}</span></label>
-            <button class="reset-mini" onclick="resetParam('${d.id}', ${d.d})">R</button></div>
+            <div class="ctrl-row"><label>${d.n} <span class="val" id="v-${d.id}">${d.d}</span></label></div>
             <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" value="${d.d}" step="${d.s}">
         `;
         controlContainer.appendChild(box);
         cfg[d.id] = d.d;
 
+        // Event Listeners
         setTimeout(() => {
             document.getElementById(d.id).oninput = (e) => {
+                if(AutoEngine.running) return; // Lock during auto
                 cfg[d.id] = parseFloat(e.target.value);
                 document.getElementById(`v-${d.id}`).innerText = cfg[d.id];
                 applyGlitch();
@@ -144,64 +157,152 @@
         }, 0);
     });
 
-    // --- MASTER & OMAKASE LOGIC ---
+    // --- MASTER CONTROL ---
     document.getElementById('master').oninput = (e) => {
+        if(AutoEngine.running) return;
         masterPower = parseFloat(e.target.value) / 100;
         document.getElementById('v-master').innerText = e.target.value;
         applyGlitch();
     };
 
-    const recipes = {
-        analog: { n: "Analog VHS", set: { sync: 20, rgb: 15, jaggy: 5, prob: 40, flop: 2, hue: 10 } },
-        digital: { n: "Data Corruption", set: { slide: 300, chunk: 4, bit: 3, crush: 4, prob: 80 } },
-        liquid: { n: "Acid Melting", set: { melt: 200, sort: 100, disp: 40, hue: 120, prob: 90 } },
-        void: { n: "Deep Void", set: { inv: 100, void: -60, rgb: 50, melt: 50, prob: 70 } },
-        shred: { n: "Paper Shredder", set: { slide: 800, chunk: 2, sync: 100, prob: 60 } },
-        ghost: { n: "Spectral Signal", set: { rgb: 100, disp: 150, melt: 20, prob: 50, inv: 200 } }
-    };
-
-    document.getElementById('omakase').onclick = () => {
-        const keys = Object.keys(recipes);
-        const randKey = keys[Math.floor(Math.random() * keys.length)];
-        const recipe = recipes[randKey];
+    // --- AUTO ENGINE (THE CORE LOGIC) ---
+    const AutoEngine = {
+        running: false,
+        stats: { bright: 0, contrast: 0 },
         
-        // リセット
-        defs.forEach(d => {
-            cfg[d.id] = d.d;
-            updateUI(d.id, d.d);
-        });
+        log: (msg, blink = false) => {
+            statusDiv.innerHTML = blink ? `<span class="blink">>> ${msg}</span>` : `>> ${msg}`;
+        },
 
-        // 共通ランダム要素 (味付け)
-        // マスターパワーに応じて「荒れ方」の深さを変える
-        // 50%なら普通、100%なら限界突破した値をセットする
-        const intensity = 0.5 + (Math.random() * 0.5); // 0.5 - 1.0 multiplier
-
-        // レシピ適用
-        for (const [key, val] of Object.entries(recipe.set)) {
-            // パラメータ定義を探す
-            const def = defs.find(d => d.id === key);
-            if (!def) continue;
-
-            // ランダムな揺らぎを加える (+- 20%)
-            let finalVal = val * intensity * (0.8 + Math.random() * 0.4);
+        // Phase 1: Analyze Input Image
+        analyze: () => {
+            if(!originalImageData) return { bright: 128, contrast: 50 };
+            const d = originalImageData.data;
+            let total = 0;
+            let min = 255, max = 0;
             
-            // 範囲制限
-            finalVal = Math.max(def.min, Math.min(def.max, finalVal));
-            finalVal = def.s === 1 ? Math.floor(finalVal) : parseFloat(finalVal.toFixed(1));
+            // Fast scan (stride 10)
+            for(let i=0; i<d.length; i+=40) {
+                const b = (d[i] + d[i+1] + d[i+2]) / 3;
+                total += b;
+                if(b < min) min = b;
+                if(b > max) max = b;
+            }
+            return {
+                bright: total / (d.length / 40),
+                contrast: max - min
+            };
+        },
 
-            cfg[key] = finalVal;
-            updateUI(key, finalVal);
+        // Phase 3: Check how "broken" the image is compared to original
+        assessChaos: () => {
+            const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const orig = originalImageData.data;
+            let diff = 0;
+            // Check center strip to save perf
+            const start = Math.floor(orig.length * 0.3);
+            const end = Math.floor(orig.length * 0.7);
+            
+            for(let i=start; i<end; i+=16) { // Stride 4 pixels
+                diff += Math.abs(currentData[i] - orig[i]);
+                diff += Math.abs(currentData[i+1] - orig[i+1]);
+                diff += Math.abs(currentData[i+2] - orig[i+2]);
+            }
+            return diff / ((end-start)/16); // Average diff per checked pixel
+        },
+
+        start: async () => {
+            if(!originalImageData) {
+                AutoEngine.log("ERROR: NO SOURCE DATA");
+                return;
+            }
+            AutoEngine.running = true;
+            document.getElementById('btn-auto').disabled = true;
+            scannerDiv.classList.add('scan-active');
+
+            // 1. ANALYSIS
+            AutoEngine.log("ANALYZING SOURCE GEOMETRY...", true);
+            await new Promise(r => setTimeout(r, 600));
+            AutoEngine.stats = AutoEngine.analyze();
+            
+            const isDark = AutoEngine.stats.bright < 60;
+            const isLowContrast = AutoEngine.stats.contrast < 40;
+            
+            AutoEngine.log(`SRC: B:${Math.floor(AutoEngine.stats.bright)} C:${AutoEngine.stats.contrast}`);
+            await new Promise(r => setTimeout(r, 400));
+
+            // 2. INITIALIZE HEURISTICS
+            // Reset all first
+            defs.forEach(d => { cfg[d.id] = d.d; updateUI(d.id, d.d); });
+
+            // Base Randomization Logic based on Analysis
+            const targetChaos = 30 + Math.random() * 50; // Goal score
+            
+            // Setup a "Vibe"
+            const mode = Math.random();
+            if(mode < 0.33) {
+                // Analog Vibe
+                cfg.sync = 20 + Math.random() * 80;
+                cfg.rgb = 10 + Math.random() * 40;
+                cfg.jaggy = (Math.random()-0.5) * 20;
+            } else if (mode < 0.66) {
+                // Digital Vibe
+                cfg.slide = 100 + Math.random() * 500;
+                cfg.chunk = 2 + Math.random() * 20;
+                cfg.bit = Math.floor(Math.random() * 4);
+            } else {
+                // Liquid/Deep Vibe
+                cfg.melt = 50 + Math.random() * 150;
+                cfg.hue = Math.random() * 180;
+                if(isDark) cfg.inv = 100; // Invert dark images
+            }
+
+            // 3. OPTIMIZATION LOOP
+            let iterations = 8;
+            for(let i=0; i<iterations; i++) {
+                // Tweak random parameter
+                const targetParam = defs[Math.floor(Math.random() * defs.length)];
+                
+                // Highlight UI
+                document.querySelectorAll('.group').forEach(el => el.classList.remove('active-tune'));
+                document.getElementById(`grp-${targetParam.id}`).classList.add('active-tune');
+
+                // Apply Mutation
+                const range = targetParam.max - targetParam.min;
+                let val = cfg[targetParam.id] + (Math.random() - 0.5) * (range * 0.4);
+                val = Math.max(targetParam.min, Math.min(targetParam.max, val));
+                if(targetParam.s === 1) val = Math.floor(val);
+                
+                cfg[targetParam.id] = val;
+                updateUI(targetParam.id, val);
+                
+                // Render
+                applyGlitch();
+                
+                // Assess
+                const score = AutoEngine.assessChaos();
+                AutoEngine.log(`OPT PASS ${i+1}/${iterations} [E:${Math.floor(score)}]`);
+
+                // Feedback Logic
+                if (score > 150) {
+                    // Too chaotic, reduce destructive params
+                    cfg.prob = Math.max(0, cfg.prob - 20);
+                    cfg.slide *= 0.8;
+                    updateUI('prob', cfg.prob);
+                }
+                
+                await new Promise(r => setTimeout(r, 200 + Math.random() * 200));
+            }
+
+            document.querySelectorAll('.group').forEach(el => el.classList.remove('active-tune'));
+            scannerDiv.classList.remove('scan-active');
+            AutoEngine.log("OPTIMIZATION COMPLETE.");
+            AutoEngine.running = false;
+            document.getElementById('btn-auto').disabled = false;
         }
-
-        // レシピ名表示アニメーション
-        const disp = document.getElementById('recipe-display');
-        disp.innerText = "Generating: " + recipe.n;
-        disp.classList.remove('show');
-        void disp.offsetWidth; // trigger reflow
-        disp.classList.add('show');
-
-        applyGlitch();
     };
+
+    document.getElementById('btn-auto').onclick = AutoEngine.start;
 
     function updateUI(id, val) {
         document.getElementById(id).value = val;
@@ -209,15 +310,18 @@
     }
 
     window.resetParam = (id, def) => {
+        if(AutoEngine.running) return;
         updateUI(id, def);
         cfg[id] = def;
         applyGlitch();
     };
 
     document.getElementById('reset-all').onclick = () => {
-        document.getElementById('master').value = 0; masterPower = 0;
-        document.getElementById('v-master').innerText = 0;
+        if(AutoEngine.running) return;
+        document.getElementById('master').value = 50; masterPower = 0.5;
+        document.getElementById('v-master').innerText = 50;
         defs.forEach(d => resetParam(d.id, d.d));
+        AutoEngine.log("SYSTEM RESET.");
     };
 
     // --- CORE PROCESSING ---
@@ -230,6 +334,7 @@
                 canvas.width = img.width; canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+                AutoEngine.log("IMAGE LOADED. READY.");
                 applyGlitch();
             };
             img.src = ev.target.result;
@@ -241,7 +346,7 @@
         canvas.toBlob((blob) => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `PNG_DESTROYER_V17_${Date.now()}.png`;
+            link.download = `PNG_DESTROYER_${Date.now()}.png`;
             link.click();
         }, 'image/png');
     };
@@ -257,35 +362,44 @@
         const { width, height, data } = originalImageData;
         const out = new ImageData(new Uint8ClampedArray(data), width, height);
 
-        // Calculate effective values
         const eff = {};
         defs.forEach(d => {
-            eff[d.id] = d.d + (cfg[d.id] - d.d) * masterPower;
+            // Master power scaling logic
+            let scale = 1;
+            // Some params scale up, some scale probability
+            if (['prob'].includes(d.id)) {
+                // Prob works inversely with master power effectively (lower prob = more glitch usually, but here prob is error prob?)
+                // Actually in this script: prob is "Line Probability" to KEEP original. 
+                // So lower prob = more glitch.
+                // Current masterPower: 0.5 default.
+                // Let's keep logic simple: direct mapping + master influence
+            }
+            eff[d.id] = cfg[d.id]; 
+            // Simple influence: Mix current value with boosted value based on master
+            if(d.id !== 'inv' && d.id !== 'void') {
+                eff[d.id] = cfg[d.id] * (0.5 + masterPower);
+            }
         });
 
-        // Pre-calculation for rotation
+        // Pre-calculation
         const rotRad = eff.hue * (Math.PI / 180);
         const cosR = Math.cos(rotRad), sinR = Math.sin(rotRad);
-
+        
         // --- PASS 1: GEOMETRY ---
         for (let y = 0; y < height; y++) {
-            // Line Probability
-            if (Math.random() * 100 > eff.prob) {
+            // Line Keep Probability (Modified by master)
+            // If random > eff.prob (high prob = clean image), skip.
+            // Adjust prob by master: Master 0 = Prob 100 (Clean). Master 1 = Prob 0 (Mess).
+            // But we use sliders. Let's rely on sliders mostly.
+            
+            if (Math.random() * 100 > eff.prob * (2 - masterPower*2)) { // Quick hack to make master affect density
                 const s = y * width * 4;
                 out.data.set(data.subarray(s, s + width * 4), s);
                 continue; 
             }
 
-            // Time/Line Stutter
             let readY = y;
-            if (eff.stutter > 0) {
-                const b = Math.max(1, eff.chunk);
-                if (Math.floor(y / b) % Math.floor(eff.stutter + 1) === 0) {
-                    readY = y - (y % b);
-                }
-            }
-
-            // Offsets
+            const b = Math.max(1, eff.chunk);
             const saw = (readY % Math.max(1, eff.chunk * 5)) * (eff.jaggy / 10);
             const sync = (readY % 2 === 0) ? eff.sync : -eff.sync;
             const slide = (Math.floor(readY / eff.chunk) % 2 === 0) ? eff.slide : 0;
@@ -293,39 +407,32 @@
 
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
-                
-                // Data Displace (Self-Referencing)
-                let ptrOffset = 0;
-                if (eff.disp > 0) {
-                    const bright = (data[i] + data[i+1] + data[i+2]) / 3;
-                    ptrOffset = (bright / 255) * eff.disp;
-                }
-
-                const ti = getIdx(x + totalX + ptrOffset, readY, width, height);
+                const ti = getIdx(x + totalX, readY, width, height);
                 let r = data[ti], g = data[ti+1], b = data[ti+2];
 
-                // Binary Logic
-                if (eff.mult !== 1) { r=(r*eff.mult)%256; g=(g*eff.mult)%256; b=(b*eff.mult)%256; }
+                // Logic
                 if (eff.crush > 0) { const m = 0xFF << Math.floor(eff.crush); r&=m; g&=m; b&=m; }
                 if (eff.bit > 0) { const s=Math.floor(eff.bit); r^=(r>>s); g^=(g>>s); b^=(b>>s); }
-                if (eff.flop > 0 && ((x*13 + y*7)%100 < eff.flop*10)) { r=255-r; g=255-g; b=255-b; }
-
+                
                 out.data[i] = r; out.data[i+1] = g; out.data[i+2] = b; out.data[i+3] = 255;
             }
         }
 
         // --- PASS 2: FLOW & COLOR ---
-        const temp = new Uint8ClampedArray(out.data);
+        // Optimization: Don't create temp array if effects are off
         const doMelt = eff.melt > 0;
         const doSort = eff.sort > 0;
         const doColor = (eff.rgb > 0 || eff.hue > 0);
+        const doLevel = (eff.void !== 0 || eff.inv !== 255);
 
-        if (doMelt || doSort || doColor || eff.void !== 0 || eff.inv !== 255) {
+        if (doMelt || doSort || doColor || doLevel) {
+            const temp = new Uint8ClampedArray(out.data); // Snapshot of Pass 1
+            
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const i = (y * width + x) * 4;
                     
-                    // Melt (Vertical)
+                    // Melt
                     if (doMelt) {
                         const upIdx = getIdx(x, y - 1, width, height);
                         const myB = (temp[i]+temp[i+1]+temp[i+2]);
@@ -334,34 +441,39 @@
                             out.data[i]=out.data[upIdx]; out.data[i+1]=out.data[upIdx+1]; out.data[i+2]=out.data[upIdx+2];
                         }
                     }
-                    // Sort (Horizontal)
+                    // Sort
                     if (doSort) {
                         const prevIdx = getIdx(x - 1, y, width, height);
-                        const currVal = out.data[i];
-                        const prevVal = out.data[prevIdx];
-                        if (Math.abs(currVal - prevVal) < eff.sort) {
-                            out.data[i]=prevVal; out.data[i+1]=out.data[prevIdx+1]; out.data[i+2]=out.data[prevIdx+2];
+                        if (Math.abs(out.data[i] - out.data[prevIdx]) < eff.sort) {
+                            out.data[i]=out.data[prevIdx]; out.data[i+1]=out.data[prevIdx+1]; out.data[i+2]=out.data[prevIdx+2];
                         }
                     }
-                    // Color
-                    if (doColor) {
-                        const split = Math.floor(eff.rgb);
-                        const ri = getIdx(x + split, y, width, height);
-                        const bi = getIdx(x - split, y, width, height);
-                        let r = temp[ri], g = out.data[i+1], b = temp[bi+2]; // Green from current
+                    // Color & Level
+                    if (doColor || doLevel) {
+                        // Resample for RGB shift
+                        let r = out.data[i], g = out.data[i+1], b = out.data[i+2];
+                        
+                        if(eff.rgb > 0) {
+                            const split = Math.floor(eff.rgb);
+                            const ri = getIdx(x + split, y, width, height);
+                            const bi = getIdx(x - split, y, width, height);
+                            r = temp[ri]; b = temp[bi+2];
+                        }
 
                         if (eff.hue > 0) {
                             const nr = r*cosR - g*sinR + b*sinR;
                             const ng = r*sinR + g*cosR - b*sinR;
                             const nb = -r*sinR + g*sinR + b*cosR;
-                            r=Math.abs(nr)%255; g=Math.abs(ng)%255; b=Math.abs(nb)%255;
+                            r=Math.abs(nr); g=Math.abs(ng); b=Math.abs(nb);
                         }
+
+                        if(doLevel) {
+                            r += eff.void; g += eff.void; b += eff.void;
+                            if(r > eff.inv) r=255-r; if(g > eff.inv) g=255-g; if(b > eff.inv) b=255-b;
+                        }
+                        
                         out.data[i]=r; out.data[i+1]=g; out.data[i+2]=b;
                     }
-                    // Level
-                    let fr=out.data[i]+eff.void, fg=out.data[i+1]+eff.void, fb=out.data[i+2]+eff.void;
-                    if(fr > eff.inv) fr=255-fr; if(fg > eff.inv) fg=255-fg; if(fb > eff.inv) fb=255-fb;
-                    out.data[i]=fr; out.data[i+1]=fg; out.data[i+2]=fb;
                 }
             }
         }
