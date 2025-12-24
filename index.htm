@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>PNG destroyer</title>
+    <style>
+        :root { --accent: #ff00ff; --bg: #000000; --panel: #0a0a0a; }
+        body { background: var(--bg); color: var(--accent); font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; }
+        .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 2px 0 20px rgba(255,0,255,0.1); }
+        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #111 0%, #000 100%); padding: 20px; overflow: hidden; }
+        h1 { font-size: 0.9rem; border: 1px solid var(--accent); padding: 8px; text-align: center; letter-spacing: 2px; }
+        .group { border: 1px solid #1a1a1a; padding: 10px; background: #050505; margin-bottom: 5px; }
+        label { display: flex; justify-content: space-between; margin-bottom: 4px; color: #666; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 2px; margin-bottom: 8px; }
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; border: 1px solid #1a1a1a; }
+        .val { color: var(--accent); font-weight: bold; }
+        button { background: #111; color: var(--accent); border: 1px solid var(--accent); padding: 8px; cursor: pointer; font-family: inherit; width: 100%; margin-top: 5px; transition: 0.3s; }
+        button:hover { background: var(--accent); color: #000; }
+        .jitter-label { color: #00ffff !important; }
+        .danger-label { color: #ff3300 !important; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h1>PNG destroyer</h1>
+    <input type="file" id="upload" accept="image/*">
+    <button id="download">Export PNG</button>
+
+    <div class="group">
+        <label>System Probability <span class="val" id="v-prob">100</span>%</label>
+        <input type="range" id="prob" min="0" max="100" value="100">
+        
+        <label>Filter Type (0-4) <span class="val" id="v-type">1</span></label>
+        <input type="range" id="type" min="0" max="4" value="1">
+        
+        <label>Stability (基軸) <span class="val" id="v-stable">50</span></label>
+        <input type="range" id="stable" min="0" max="300" value="50">
+        <label class="jitter-label">Stability Jitter <span class="val" id="v-stableJ">0</span></label>
+        <input type="range" id="stableJ" min="0" max="200" value="0">
+    </div>
+
+    <div class="group">
+        <label>Square Slide <span class="val" id="v-slide">0</span></label>
+        <input type="range" id="slide" min="0" max="1000" value="0">
+        <label class="jitter-label">Slide Jitter <span class="val" id="v-slideJ">0</span></label>
+        <input type="range" id="slideJ" min="0" max="1000" value="0">
+        <label>Chunk Size <span class="val" id="v-chunk">10</span></label>
+        <input type="range" id="chunk" min="1" max="500" value="10">
+    </div>
+
+    <div class="group">
+        <label class="danger-label">Pixel Sort (色の流動) <span class="val" id="v-sort">0</span></label>
+        <input type="range" id="sort" min="0" max="200" value="0">
+        <div style="font-size:8px; color:#444;">※隣接ピクセルの色を強制的に上書きし、溶けさせます</div>
+    </div>
+
+    <div class="group">
+        <label class="danger-label">Channel Shuffle <span class="val" id="v-shuffle">0</span></label>
+        <input type="range" id="shuffle" min="0" max="5" value="0" step="1">
+        <div style="font-size:8px; color:#444;">0:RGB, 1:RBG, 2:GRB, 3:GBR, 4:BRG, 5:BGR</div>
+    </div>
+
+    <div class="group">
+        <label>RGB Split <span class="val" id="v-rgb">0</span></label>
+        <input type="range" id="rgb" min="0" max="100" value="0">
+        <label>Invert / Threshold <span class="val" id="v-inv">255</span></label>
+        <input type="range" id="inv" min="0" max="255" value="255">
+    </div>
+
+    <div class="group">
+        <label>Bit XOR Noise <span class="val" id="v-bit">0</span></label>
+        <input type="range" id="bit" min="0" max="8" value="0">
+        <label>Darkness / Void <span class="val" id="v-void">0</span></label>
+        <input type="range" id="void" min="-255" max="255" value="0">
+    </div>
+</div>
+
+<div class="viewport">
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let originalImageData = null;
+
+    const params = ['prob', 'type', 'stable', 'stableJ', 'slide', 'slideJ', 'chunk', 'sort', 'shuffle', 'rgb', 'inv', 'bit', 'void'];
+    const els = {};
+    params.forEach(p => {
+        els[p] = document.getElementById(p);
+        els[p].oninput = () => {
+            document.getElementById(`v-${p}`).innerText = els[p].value;
+            applyGlitch();
+        };
+    });
+
+    document.getElementById('upload').onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width; canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+                applyGlitch();
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    document.getElementById('download').onclick = () => {
+        const link = document.createElement('a');
+        link.download = `void_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
+
+    function applyGlitch() {
+        if (!originalImageData) return;
+        const { width, height, data } = originalImageData;
+        const out = new ImageData(new Uint8ClampedArray(data), width, height);
+        const config = {};
+        params.forEach(p => config[p] = parseFloat(els[p].value));
+
+        for (let y = 0; y < height; y++) {
+            if (Math.random() * 100 > config.prob) continue;
+
+            const slideVal = config.slide + (Math.random() - 0.5) * config.slideJ;
+            const xOffset = (Math.floor(y / config.chunk) % 2) * slideVal;
+            const currentStable = config.stable + (Math.random() - 0.5) * config.stableJ;
+
+            for (let x = 0; x < width; x++) {
+                const tx = Math.floor(x + xOffset + width * 10) % width;
+                const i = (y * width + x) * 4;
+                const ti = (y * width + tx) * 4;
+
+                // PNG Filter logic
+                let rgb = [data[ti], data[ti+1], data[ti+2]];
+                
+                if (y > 0 && x > 0) {
+                    const prevX = ((y * width + (tx - 1 + width) % width) * 4);
+                    const prevY = (((y - 1) * width + tx) * 4);
+                    
+                    for (let c = 0; c < 3; c++) {
+                        let ref = 0;
+                        if (config.type == 1) ref = out.data[prevX + c];
+                        else if (config.type == 2) ref = out.data[prevY + c];
+                        else if (config.type == 3) ref = (out.data[prevX + c] + out.data[prevY + c]) / 2;
+                        else if (config.type == 4) ref = Math.abs(out.data[prevX + c] - out.data[prevY + c]);
+                        
+                        rgb[c] = (rgb[c] + ref * (currentStable / 100)) % 256;
+                    }
+                }
+
+                // Pixel Sort Simulation (強制的な色置換)
+                if (config.sort > 0 && x > 0) {
+                    const prevI = i - 4;
+                    if (Math.abs(rgb[0] - out.data[prevI]) < config.sort) {
+                        rgb[0] = out.data[prevI];
+                        rgb[1] = out.data[prevI+1];
+                        rgb[2] = out.data[prevI+2];
+                    }
+                }
+
+                // Channel Shuffle
+                let finalRGB = [...rgb];
+                const s = config.shuffle;
+                if (s==1) finalRGB = [rgb[0], rgb[2], rgb[1]];
+                else if (s==2) finalRGB = [rgb[1], rgb[0], rgb[2]];
+                else if (s==3) finalRGB = [rgb[1], rgb[2], rgb[0]];
+                else if (s==4) finalRGB = [rgb[2], rgb[0], rgb[1]];
+                else if (s==5) finalRGB = [rgb[2], rgb[1], rgb[0]];
+
+                // RGB Split
+                if (config.rgb > 0) {
+                    const shift = Math.floor(config.rgb);
+                    const rx = (tx + shift + width) % width;
+                    const bx = (tx - shift + width) % width;
+                    finalRGB[0] = data[(y * width + rx) * 4];
+                    finalRGB[2] = data[(y * width + bx) * 4 + 2];
+                }
+
+                for (let c = 0; c < 3; c++) {
+                    let val = finalRGB[c];
+                    if (config.bit > 0) val ^= (val >> Math.floor(config.bit));
+                    val += config.void;
+                    if (val > config.inv) val = 255 - val;
+                    out.data[i + c] = val;
+                }
+                out.data[i+3] = 255;
+            }
+        }
+        ctx.putImageData(out, 0, 0);
+    }
+</script>
+</body>
+</html>
