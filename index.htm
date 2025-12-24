@@ -2,100 +2,91 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG Destroyer v18 // AUTO-LOGIC</title>
+    <title>PNG Destroyer</title>
     <style>
-        :root { --accent: #00ffcc; --bg: #050505; --panel: #0a0a0a; --text: #889; --danger: #ff0055; }
-        body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; overflow: hidden; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-        /* Sidebar & Layout */
-        .sidebar { width: 460px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; box-shadow: 5px 0 20px #000; z-index: 100; position: relative; }
-        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 20px; overflow: hidden; position: relative; }
+        :root { --accent: #ff0000; --bg: #000; --panel: #1a1a1a; --text: #eee; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; font-size: 11px; }
         
-        h1 { font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; margin: 0; color: #fff; letter-spacing: 2px; font-weight: 900; text-shadow: 0 0 10px var(--accent); }
-        .ver { font-size: 9px; color: #556; margin-bottom: 5px; }
+        /* UI Layout */
+        .sidebar { width: 420px; background: var(--panel); border-right: 1px solid #333; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; box-shadow: 5px 0 20px rgba(0,0,0,0.8); }
+        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #080808; padding: 20px; overflow: hidden; }
         
-        /* Auto Gen Section */
-        .master-group { background: #001a1a; border: 1px solid var(--accent); padding: 12px; border-radius: 2px; position: relative; overflow: hidden; }
-        .master-label { color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { font-size: 1.2rem; border-left: 5px solid var(--accent); padding-left: 10px; margin: 0 0 10px 0; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
         
-        .status-display {
-            font-size: 9px; font-family: 'Courier New', monospace; color: var(--accent);
-            margin-top: 8px; padding: 5px; background: rgba(0,0,0,0.5); border: 1px dashed #334;
-            min-height: 2.5em; white-space: pre-wrap; line-height: 1.2;
-        }
-        .blink { animation: blinker 0.1s linear infinite; color: #fff; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
-        .auto-btn { 
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; 
-            font-weight: 900; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; 
-            font-family: inherit; margin-top: 8px; transition: 0.2s; position: relative; overflow: hidden;
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 0 100%);
-        }
-        .auto-btn:hover { background: #fff; box-shadow: 0 0 15px var(--accent); }
-        .auto-btn:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow: none; }
-        .auto-btn::after { content:"AI-ASSISTED OPTIMIZATION"; font-size: 7px; display:block; opacity:0.6; }
-
-        /* Controls */
-        .group { background: #0e0e0e; border: 1px solid #222; padding: 6px 8px; transition: 0.2s; }
-        .group.active-tune { border-color: var(--accent); background: #111; }
-        .group-title { color: #556; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 4px; padding-bottom: 2px; font-size: 9px; text-transform: uppercase; }
-        .ctrl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; }
-        label { color: #889; flex-grow: 1; display: flex; justify-content: space-between; }
-        .val { color: var(--accent); font-weight: bold; font-family: monospace; }
+        .group { background: #222; border: 1px solid #333; padding: 12px; border-radius: 4px; }
+        .group-title { font-weight: bold; margin-bottom: 10px; color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; font-size: 0.75rem; }
         
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 4px 0 8px 0; background: #333; }
-
-        /* Canvas & Overlay */
-        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; box-shadow: 0 0 50px rgba(0, 255, 204, 0.05); }
+        label { display: flex; justify-content: space-between; margin-bottom: 5px; color: #ccc; align-items: center; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 4px; margin: 8px 0; }
         
-        .scan-line {
-            position: absolute; width: 100%; height: 2px; background: var(--accent); opacity: 0; top: 0; left: 0; pointer-events: none;
-            box-shadow: 0 0 10px var(--accent); z-index: 10;
-        }
-        .scan-active { opacity: 0.8; animation: scan 1.5s linear infinite; }
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
-
-        .sub-btn { background: #222; color: #888; border: 1px solid #444; padding: 8px; cursor: pointer; font-family: inherit; font-size: 9px; text-transform: uppercase; width: 48%; }
-        .sub-btn:hover { background: #333; color: #fff; }
-        .action-row { display: flex; justify-content: space-between; margin-top: 5px; }
-        input[type="file"] { width: 100%; background: #000; color: #666; border: 1px solid #333; padding: 8px; box-sizing: border-box; font-size: 9px; }
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; border: 1px solid #000; box-shadow: 0 0 30px rgba(255,0,0,0.2); }
+        
+        .val { background: #333; padding: 2px 6px; border-radius: 3px; color: var(--accent); min-width: 30px; text-align: center; font-size: 10px; }
+        
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { background: #333; color: #fff; border: 1px solid #444; padding: 12px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; border-radius: 4px; }
+        button:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        #random { border-color: #555; }
+        
+        #upload { background: #111; padding: 10px; border: 1px dashed #444; border-radius: 4px; color: #888; }
+        #status { font-size: 10px; color: #666; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h1>PNG DESTROYER</h1>
-    <div class="ver">V18.2 // LOGIC_CORE_ACTIVE</div>
-
+    <h1>PNG Destroyer</h1>
     <input type="file" id="upload" accept="image/*">
+    <div class="btn-row">
+        <button id="random">Randomize</button>
+        <button id="download">Save PNG</button>
+    </div>
+    <div id="status">System Standby</div>
 
-    <div class="master-group">
-        <div class="ctrl-row">
-            <span class="master-label">Core Logic</span>
-            <span class="val" id="v-master">50</span>%
-        </div>
-        <div id="sys-status" class="status-display">SYSTEM STANDBY...</div>
-        <input type="range" id="master" min="0" max="100" value="50">
-        <button class="auto-btn" id="btn-auto">AUTO-GENERATE</button>
+    <div class="group">
+        <div class="group-title">Filter Engine (PNG Logic)</div>
+        <label>Probability <span class="val" id="v-prob">100</span></label>
+        <input type="range" id="prob" min="0" max="100" value="100">
+        <label>Filter Type (0-4) <span class="val" id="v-type">1</span></label>
+        <input type="range" id="type" min="0" max="4" value="1">
+        <label>Stability (Base) <span class="val" id="v-stable">50</span></label>
+        <input type="range" id="stable" min="0" max="300" value="50">
+        <label>Stability Jitter <span class="val" id="v-stableJ">0</span></label>
+        <input type="range" id="stableJ" min="0" max="200" value="0">
     </div>
 
-    <div class="action-row">
-        <button class="sub-btn" id="reset-all">Reset Params</button>
-        <button class="sub-btn" id="download">Save Image</button>
+    <div class="group">
+        <div class="group-title">Spatial Distortion (Looping)</div>
+        <label>Square Slide <span class="val" id="v-slide">0</span></label>
+        <input type="range" id="slide" min="0" max="1000" value="0">
+        <label>Slide Jitter <span class="val" id="v-slideJ">0</span></label>
+        <input type="range" id="slideJ" min="0" max="1000" value="0">
+        <label>Chunk Size <span class="val" id="v-chunk">10</span></label>
+        <input type="range" id="chunk" min="1" max="500" value="10">
     </div>
 
-    <div id="controls"></div>
+    <div class="group">
+        <div class="group-title">Color Abyss</div>
+        <label>Pixel Sort <span class="val" id="v-sort">0</span></label>
+        <input type="range" id="sort" min="0" max="255" value="0">
+        <label>RGB Split Width <span class="val" id="v-rgb">0</span></label>
+        <input type="range" id="rgb" min="0" max="150" value="0">
+        <label>Channel Shuffle <span class="val" id="v-shuffle">0</span></label>
+        <input type="range" id="shuffle" min="0" max="5" value="0" step="1">
+    </div>
+
+    <div class="group">
+        <div class="group-title">Binary Corruption</div>
+        <label>XOR Bit Noise <span class="val" id="v-bit">0</span></label>
+        <input type="range" id="bit" min="0" max="8" value="0">
+        <label>Invert Threshold <span class="val" id="v-inv">255</span></label>
+        <input type="range" id="inv" min="0" max="255" value="255">
+        <label>Void (Brightness) <span class="val" id="v-void">0</span></label>
+        <input type="range" id="void" min="-255" max="255" value="0">
+    </div>
 </div>
 
 <div class="viewport">
-    <div id="scanner" class="scan-line"></div>
     <canvas id="canvas"></canvas>
 </div>
 
@@ -104,229 +95,19 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let originalImageData = null;
 
-    // --- PARAMETER DEFINITIONS ---
-    const defs = [
-        {c:'1. Struct', id:'slide',   n:'Block Shift',   d:0, min:0, max:1000, s:1},
-        {c:'1. Struct', id:'jaggy',   n:'Sawtooth Skew', d:0, min:-100, max:100, s:1},
-        {c:'1. Struct', id:'chunk',   n:'Block Size',    d:16, min:1, max:300, s:1},
-        {c:'2. Entropy',id:'prob',    n:'Err Probability',d:100, min:0, max:100, s:1},
-        {c:'2. Entropy',id:'sync',    n:'H-Sync Loss',   d:0, min:0, max:200, s:1},
-        {c:'3. Chromatic',id:'rgb',   n:'RGB Offset',    d:0, min:0, max:200, s:1},
-        {c:'3. Chromatic',id:'hue',   n:'Hue Rotation',  d:0, min:0, max:360, s:1},
-        {c:'4. Fluid',  id:'melt',    n:'Smart Melt (Y)',d:0, min:0, max:255, s:1},
-        {c:'4. Fluid',  id:'sort',    n:'Pixel Drag (X)',d:0, min:0, max:255, s:1},
-        {c:'5. Binary', id:'crush',   n:'Bit Crush',     d:0, min:0, max:7, s:1},
-        {c:'5. Binary', id:'bit',     n:'XOR Noise',     d:0, min:0, max:8, s:1},
-        {c:'5. Binary', id:'inv',     n:'Invert Thresh', d:255, min:0, max:255, s:1},
-        {c:'5. Binary', id:'void',    n:'Void Level',    d:0, min:-255, max:255, s:1}
-    ];
-
-    const cfg = {};
-    let masterPower = 0.5;
-    const controlContainer = document.getElementById('controls');
-    const statusDiv = document.getElementById('sys-status');
-    const scannerDiv = document.getElementById('scanner');
-
-    // --- UI GENERATION ---
-    let currentCat = "";
-    defs.forEach(d => {
-        if(d.c !== currentCat) {
-            currentCat = d.c;
-            const t = document.createElement('div');
-            t.className = 'group-title'; t.innerText = d.c;
-            controlContainer.appendChild(t);
-        }
-        const box = document.createElement('div');
-        box.className = 'group';
-        box.id = `grp-${d.id}`;
-        box.innerHTML = `
-            <div class="ctrl-row"><label>${d.n} <span class="val" id="v-${d.id}">${d.d}</span></label></div>
-            <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" value="${d.d}" step="${d.s}">
-        `;
-        controlContainer.appendChild(box);
-        cfg[d.id] = d.d;
-
-        // Event Listeners
-        setTimeout(() => {
-            document.getElementById(d.id).oninput = (e) => {
-                if(AutoEngine.running) return; // Lock during auto
-                cfg[d.id] = parseFloat(e.target.value);
-                document.getElementById(`v-${d.id}`).innerText = cfg[d.id];
-                applyGlitch();
-            };
-        }, 0);
+    const params = ['prob', 'type', 'stable', 'stableJ', 'slide', 'slideJ', 'chunk', 'sort', 'rgb', 'shuffle', 'bit', 'inv', 'void'];
+    const els = {};
+    params.forEach(p => {
+        els[p] = document.getElementById(p);
+        els[p].oninput = () => {
+            document.getElementById(`v-${p}`).innerText = els[p].value;
+            applyGlitch();
+        };
     });
 
-    // --- MASTER CONTROL ---
-    document.getElementById('master').oninput = (e) => {
-        if(AutoEngine.running) return;
-        masterPower = parseFloat(e.target.value) / 100;
-        document.getElementById('v-master').innerText = e.target.value;
-        applyGlitch();
-    };
-
-    // --- AUTO ENGINE (THE CORE LOGIC) ---
-    const AutoEngine = {
-        running: false,
-        stats: { bright: 0, contrast: 0 },
-        
-        log: (msg, blink = false) => {
-            statusDiv.innerHTML = blink ? `<span class="blink">>> ${msg}</span>` : `>> ${msg}`;
-        },
-
-        // Phase 1: Analyze Input Image
-        analyze: () => {
-            if(!originalImageData) return { bright: 128, contrast: 50 };
-            const d = originalImageData.data;
-            let total = 0;
-            let min = 255, max = 0;
-            
-            // Fast scan (stride 10)
-            for(let i=0; i<d.length; i+=40) {
-                const b = (d[i] + d[i+1] + d[i+2]) / 3;
-                total += b;
-                if(b < min) min = b;
-                if(b > max) max = b;
-            }
-            return {
-                bright: total / (d.length / 40),
-                contrast: max - min
-            };
-        },
-
-        // Phase 3: Check how "broken" the image is compared to original
-        assessChaos: () => {
-            const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            const orig = originalImageData.data;
-            let diff = 0;
-            // Check center strip to save perf
-            const start = Math.floor(orig.length * 0.3);
-            const end = Math.floor(orig.length * 0.7);
-            
-            for(let i=start; i<end; i+=16) { // Stride 4 pixels
-                diff += Math.abs(currentData[i] - orig[i]);
-                diff += Math.abs(currentData[i+1] - orig[i+1]);
-                diff += Math.abs(currentData[i+2] - orig[i+2]);
-            }
-            return diff / ((end-start)/16); // Average diff per checked pixel
-        },
-
-        start: async () => {
-            if(!originalImageData) {
-                AutoEngine.log("ERROR: NO SOURCE DATA");
-                return;
-            }
-            AutoEngine.running = true;
-            document.getElementById('btn-auto').disabled = true;
-            scannerDiv.classList.add('scan-active');
-
-            // 1. ANALYSIS
-            AutoEngine.log("ANALYZING SOURCE GEOMETRY...", true);
-            await new Promise(r => setTimeout(r, 600));
-            AutoEngine.stats = AutoEngine.analyze();
-            
-            const isDark = AutoEngine.stats.bright < 60;
-            const isLowContrast = AutoEngine.stats.contrast < 40;
-            
-            AutoEngine.log(`SRC: B:${Math.floor(AutoEngine.stats.bright)} C:${AutoEngine.stats.contrast}`);
-            await new Promise(r => setTimeout(r, 400));
-
-            // 2. INITIALIZE HEURISTICS
-            // Reset all first
-            defs.forEach(d => { cfg[d.id] = d.d; updateUI(d.id, d.d); });
-
-            // Base Randomization Logic based on Analysis
-            const targetChaos = 30 + Math.random() * 50; // Goal score
-            
-            // Setup a "Vibe"
-            const mode = Math.random();
-            if(mode < 0.33) {
-                // Analog Vibe
-                cfg.sync = 20 + Math.random() * 80;
-                cfg.rgb = 10 + Math.random() * 40;
-                cfg.jaggy = (Math.random()-0.5) * 20;
-            } else if (mode < 0.66) {
-                // Digital Vibe
-                cfg.slide = 100 + Math.random() * 500;
-                cfg.chunk = 2 + Math.random() * 20;
-                cfg.bit = Math.floor(Math.random() * 4);
-            } else {
-                // Liquid/Deep Vibe
-                cfg.melt = 50 + Math.random() * 150;
-                cfg.hue = Math.random() * 180;
-                if(isDark) cfg.inv = 100; // Invert dark images
-            }
-
-            // 3. OPTIMIZATION LOOP
-            let iterations = 8;
-            for(let i=0; i<iterations; i++) {
-                // Tweak random parameter
-                const targetParam = defs[Math.floor(Math.random() * defs.length)];
-                
-                // Highlight UI
-                document.querySelectorAll('.group').forEach(el => el.classList.remove('active-tune'));
-                document.getElementById(`grp-${targetParam.id}`).classList.add('active-tune');
-
-                // Apply Mutation
-                const range = targetParam.max - targetParam.min;
-                let val = cfg[targetParam.id] + (Math.random() - 0.5) * (range * 0.4);
-                val = Math.max(targetParam.min, Math.min(targetParam.max, val));
-                if(targetParam.s === 1) val = Math.floor(val);
-                
-                cfg[targetParam.id] = val;
-                updateUI(targetParam.id, val);
-                
-                // Render
-                applyGlitch();
-                
-                // Assess
-                const score = AutoEngine.assessChaos();
-                AutoEngine.log(`OPT PASS ${i+1}/${iterations} [E:${Math.floor(score)}]`);
-
-                // Feedback Logic
-                if (score > 150) {
-                    // Too chaotic, reduce destructive params
-                    cfg.prob = Math.max(0, cfg.prob - 20);
-                    cfg.slide *= 0.8;
-                    updateUI('prob', cfg.prob);
-                }
-                
-                await new Promise(r => setTimeout(r, 200 + Math.random() * 200));
-            }
-
-            document.querySelectorAll('.group').forEach(el => el.classList.remove('active-tune'));
-            scannerDiv.classList.remove('scan-active');
-            AutoEngine.log("OPTIMIZATION COMPLETE.");
-            AutoEngine.running = false;
-            document.getElementById('btn-auto').disabled = false;
-        }
-    };
-
-    document.getElementById('btn-auto').onclick = AutoEngine.start;
-
-    function updateUI(id, val) {
-        document.getElementById(id).value = val;
-        document.getElementById(`v-${id}`).innerText = val;
-    }
-
-    window.resetParam = (id, def) => {
-        if(AutoEngine.running) return;
-        updateUI(id, def);
-        cfg[id] = def;
-        applyGlitch();
-    };
-
-    document.getElementById('reset-all').onclick = () => {
-        if(AutoEngine.running) return;
-        document.getElementById('master').value = 50; masterPower = 0.5;
-        document.getElementById('v-master').innerText = 50;
-        defs.forEach(d => resetParam(d.id, d.d));
-        AutoEngine.log("SYSTEM RESET.");
-    };
-
-    // --- CORE PROCESSING ---
     document.getElementById('upload').onchange = (e) => {
-        const file = e.target.files[0]; if(!file) return;
+        const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
@@ -334,7 +115,6 @@
                 canvas.width = img.width; canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 originalImageData = ctx.getImageData(0, 0, img.width, img.height);
-                AutoEngine.log("IMAGE LOADED. READY.");
                 applyGlitch();
             };
             img.src = ev.target.result;
@@ -342,138 +122,103 @@
         reader.readAsDataURL(file);
     };
 
-    document.getElementById('download').onclick = () => {
-        canvas.toBlob((blob) => {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `PNG_DESTROYER_${Date.now()}.png`;
-            link.click();
-        }, 'image/png');
+    document.getElementById('random').onclick = () => {
+        params.forEach(p => {
+            const min = parseFloat(els[p].min);
+            const max = parseFloat(els[p].max);
+            els[p].value = Math.floor(Math.random() * (max - min + 1)) + min;
+            document.getElementById(`v-${p}`).innerText = els[p].value;
+        });
+        applyGlitch();
     };
 
-    function getIdx(x, y, w, h) {
-        const nx = ((Math.floor(x) % w) + w) % w;
-        const ny = ((Math.floor(y) % h) + h) % h;
-        return (ny * w + nx) * 4;
-    }
+    document.getElementById('download').onclick = () => {
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `PNG_DESTROYER_${Date.now()}.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    };
 
     function applyGlitch() {
         if (!originalImageData) return;
         const { width, height, data } = originalImageData;
         const out = new ImageData(new Uint8ClampedArray(data), width, height);
+        const cfg = {};
+        params.forEach(p => cfg[p] = parseFloat(els[p].value));
 
-        const eff = {};
-        defs.forEach(d => {
-            // Master power scaling logic
-            let scale = 1;
-            // Some params scale up, some scale probability
-            if (['prob'].includes(d.id)) {
-                // Prob works inversely with master power effectively (lower prob = more glitch usually, but here prob is error prob?)
-                // Actually in this script: prob is "Line Probability" to KEEP original. 
-                // So lower prob = more glitch.
-                // Current masterPower: 0.5 default.
-                // Let's keep logic simple: direct mapping + master influence
-            }
-            eff[d.id] = cfg[d.id]; 
-            // Simple influence: Mix current value with boosted value based on master
-            if(d.id !== 'inv' && d.id !== 'void') {
-                eff[d.id] = cfg[d.id] * (0.5 + masterPower);
-            }
-        });
-
-        // Pre-calculation
-        const rotRad = eff.hue * (Math.PI / 180);
-        const cosR = Math.cos(rotRad), sinR = Math.sin(rotRad);
-        
-        // --- PASS 1: GEOMETRY ---
+        // Step 1: Core Filtering & Sorting (Looping logic applied)
         for (let y = 0; y < height; y++) {
-            // Line Keep Probability (Modified by master)
-            // If random > eff.prob (high prob = clean image), skip.
-            // Adjust prob by master: Master 0 = Prob 100 (Clean). Master 1 = Prob 0 (Mess).
-            // But we use sliders. Let's rely on sliders mostly.
-            
-            if (Math.random() * 100 > eff.prob * (2 - masterPower*2)) { // Quick hack to make master affect density
-                const s = y * width * 4;
-                out.data.set(data.subarray(s, s + width * 4), s);
-                continue; 
-            }
+            if (Math.random() * 100 > cfg.prob) continue;
 
-            let readY = y;
-            const b = Math.max(1, eff.chunk);
-            const saw = (readY % Math.max(1, eff.chunk * 5)) * (eff.jaggy / 10);
-            const sync = (readY % 2 === 0) ? eff.sync : -eff.sync;
-            const slide = (Math.floor(readY / eff.chunk) % 2 === 0) ? eff.slide : 0;
-            const totalX = slide + saw + sync;
+            const slideVal = cfg.slide + (Math.random() - 0.5) * cfg.slideJ;
+            const xOffset = Math.floor((Math.floor(y / cfg.chunk) % 2) * slideVal);
+            const currentStable = cfg.stable + (Math.random() - 0.5) * cfg.stableJ;
 
             for (let x = 0; x < width; x++) {
+                // 回り込み座標の計算 (xOffsetを考慮)
+                const tx = (x + xOffset + width * 1000) % width;
                 const i = (y * width + x) * 4;
-                const ti = getIdx(x + totalX, readY, width, height);
-                let r = data[ti], g = data[ti+1], b = data[ti+2];
+                const ti = (y * width + tx) * 4;
 
-                // Logic
-                if (eff.crush > 0) { const m = 0xFF << Math.floor(eff.crush); r&=m; g&=m; b&=m; }
-                if (eff.bit > 0) { const s=Math.floor(eff.bit); r^=(r>>s); g^=(g>>s); b^=(b>>s); }
+                let r = data[ti], g = data[ti+1], b = data[ti+2];
                 
+                // PNG Filter Loop back
+                if (y > 0 && x > 0) {
+                    const px = (y * width + (x - 1 + width) % width) * 4;
+                    const py = ((y - 1) * width + x) * 4;
+                    
+                    const dr = (cfg.type==1)?out.data[px]:(cfg.type==2)?out.data[py]:(cfg.type==3)?(out.data[px]+out.data[py])/2:Math.abs(out.data[px]-out.data[py]);
+                    const dg = (cfg.type==1)?out.data[px+1]:(cfg.type==2)?out.data[py+1]:(cfg.type==3)?(out.data[px+1]+out.data[py+1])/2:Math.abs(out.data[px+1]-out.data[py+1]);
+                    const db = (cfg.type==1)?out.data[px+2]:(cfg.type==2)?out.data[py+2]:(cfg.type==3)?(out.data[px+2]+out.data[py+2])/2:Math.abs(out.data[px+2]-out.data[py+2]);
+
+                    r = (r + dr * (currentStable/100)) % 256;
+                    g = (g + dg * (currentStable/100)) % 256;
+                    b = (b + db * (currentStable/100)) % 256;
+                }
+
+                // Pixel Sort (Loop back)
+                if (cfg.sort > 0 && x > 0) {
+                    const pi = i - 4;
+                    const diff = Math.abs(r - out.data[pi]) + Math.abs(g - out.data[pi+1]) + Math.abs(b - out.data[pi+2]);
+                    if (diff < cfg.sort) {
+                        r = out.data[pi]; g = out.data[pi+1]; b = out.data[pi+2];
+                    }
+                }
+
+                // Corruption
+                if (cfg.bit > 0) { r ^= (r >> cfg.bit); g ^= (g >> cfg.bit); b ^= (b >> cfg.bit); }
+                r += cfg.void; g += cfg.void; b += cfg.void;
+                if (r > cfg.inv) r = 255 - r; if (g > cfg.inv) g = 255 - g; if (b > cfg.inv) b = 255 - b;
+
                 out.data[i] = r; out.data[i+1] = g; out.data[i+2] = b; out.data[i+3] = 255;
             }
         }
 
-        // --- PASS 2: FLOW & COLOR ---
-        // Optimization: Don't create temp array if effects are off
-        const doMelt = eff.melt > 0;
-        const doSort = eff.sort > 0;
-        const doColor = (eff.rgb > 0 || eff.hue > 0);
-        const doLevel = (eff.void !== 0 || eff.inv !== 255);
-
-        if (doMelt || doSort || doColor || doLevel) {
-            const temp = new Uint8ClampedArray(out.data); // Snapshot of Pass 1
-            
+        // Step 2: Post-Processing (RGB Split & Shuffle with clean looping)
+        if (cfg.rgb > 0 || cfg.shuffle > 0) {
+            const temp = new Uint8ClampedArray(out.data);
+            const shift = Math.floor(cfg.rgb);
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const i = (y * width + x) * 4;
+                    const rx = (x + shift + width) % width;
+                    const bx = (x - shift + width) % width;
                     
-                    // Melt
-                    if (doMelt) {
-                        const upIdx = getIdx(x, y - 1, width, height);
-                        const myB = (temp[i]+temp[i+1]+temp[i+2]);
-                        const upB = (out.data[upIdx]+out.data[upIdx+1]+out.data[upIdx+2]);
-                        if (Math.abs(myB - upB) < eff.melt * 3) {
-                            out.data[i]=out.data[upIdx]; out.data[i+1]=out.data[upIdx+1]; out.data[i+2]=out.data[upIdx+2];
-                        }
-                    }
-                    // Sort
-                    if (doSort) {
-                        const prevIdx = getIdx(x - 1, y, width, height);
-                        if (Math.abs(out.data[i] - out.data[prevIdx]) < eff.sort) {
-                            out.data[i]=out.data[prevIdx]; out.data[i+1]=out.data[prevIdx+1]; out.data[i+2]=out.data[prevIdx+2];
-                        }
-                    }
-                    // Color & Level
-                    if (doColor || doLevel) {
-                        // Resample for RGB shift
-                        let r = out.data[i], g = out.data[i+1], b = out.data[i+2];
-                        
-                        if(eff.rgb > 0) {
-                            const split = Math.floor(eff.rgb);
-                            const ri = getIdx(x + split, y, width, height);
-                            const bi = getIdx(x - split, y, width, height);
-                            r = temp[ri]; b = temp[bi+2];
-                        }
+                    let r = temp[(y * width + rx) * 4];
+                    let g = temp[i + 1];
+                    let b = temp[(y * width + bx) * 4 + 2];
 
-                        if (eff.hue > 0) {
-                            const nr = r*cosR - g*sinR + b*sinR;
-                            const ng = r*sinR + g*cosR - b*sinR;
-                            const nb = -r*sinR + g*sinR + b*cosR;
-                            r=Math.abs(nr); g=Math.abs(ng); b=Math.abs(nb);
-                        }
-
-                        if(doLevel) {
-                            r += eff.void; g += eff.void; b += eff.void;
-                            if(r > eff.inv) r=255-r; if(g > eff.inv) g=255-g; if(b > eff.inv) b=255-b;
-                        }
-                        
-                        out.data[i]=r; out.data[i+1]=g; out.data[i+2]=b;
-                    }
+                    const s = cfg.shuffle;
+                    if (s==1) out.data[i]=r, out.data[i+1]=b, out.data[i+2]=g;
+                    else if (s==2) out.data[i]=g, out.data[i+1]=r, out.data[i+2]=b;
+                    else if (s==3) out.data[i]=g, out.data[i+1]=b, out.data[i+2]=r;
+                    else if (s==4) out.data[i]=b, out.data[i+1]=r, out.data[i+2]=g;
+                    else if (s==5) out.data[i]=b, out.data[i+1]=g, out.data[i+2]=r;
+                    else out.data[i]=r, out.data[i+1]=g, out.data[i+2]=b;
                 }
             }
         }
