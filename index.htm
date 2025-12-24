@@ -2,45 +2,75 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PNG Destroyer v14</title>
+    <title>PNG Destroyer v17</title>
     <style>
-        :root { --accent: #00ff00; --bg: #000; --panel: #111; --text: #eee; }
+        :root { --accent: #ff9900; --bg: #050505; --panel: #0a0a0a; --text: #ccc; }
         body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; display: flex; height: 100vh; font-size: 10px; overflow: hidden; }
-        .sidebar { width: 440px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-shadow: 10px 0 30px #000; z-index: 10; }
-        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #080808; padding: 10px; }
-        h1 { font-size: 1.2rem; border-left: 5px solid var(--accent); padding-left: 12px; margin: 0; color: var(--accent); letter-spacing: 2px; }
-        .master-group { background: #1a0000; border: 2px solid var(--accent); padding: 15px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
-        .master-label { font-size: 11px; font-weight: 900; color: #fff !important; text-transform: uppercase; letter-spacing: 3px; }
-        .group { background: #0a0a0a; border: 1px solid #222; padding: 10px; border-radius: 2px; }
-        .group-title { font-weight: bold; margin-bottom: 8px; color: #666; border-bottom: 1px solid #333; padding-bottom: 4px; text-transform: uppercase; font-size: 9px; }
-        .ctrl-row { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-        label { flex-grow: 1; display: flex; justify-content: space-between; color: #999; }
-        .reset-mini { background: #222; color: #555; border: none; font-size: 8px; cursor: pointer; padding: 2px 4px; }
-        .reset-mini:hover { background: var(--accent); color: #000; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 4px 0 8px 0; }
-        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
-        .val { color: var(--accent); font-weight: bold; min-width: 30px; text-align: right; }
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px; }
-        button { background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; cursor: pointer; font-family: inherit; font-size: 9px; font-weight: bold; }
-        button:hover { background: var(--accent); color: #000; }
-        input[type="file"] { font-size: 9px; color: #555; background: #000; padding: 8px; border: 1px solid #222; width: 100%; box-sizing: border-box; }
+        
+        /* Sidebar & Layout */
+        .sidebar { width: 460px; background: var(--panel); border-right: 1px solid #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; box-shadow: 5px 0 20px #000; z-index: 100; }
+        .viewport { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 20px; overflow: hidden; }
+        
+        h1 { font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; margin: 0; color: #fff; letter-spacing: 2px; font-weight: 900; }
+        .ver { font-size: 9px; color: #666; margin-bottom: 5px; }
+        
+        /* Master & Omakase */
+        .master-group { background: #1a1100; border: 1px solid var(--accent); padding: 12px; border-radius: 2px; position: relative; }
+        .master-label { color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .recipe-name { position: absolute; top: 12px; right: 12px; font-size: 9px; color: var(--accent); font-style: italic; opacity: 0; transition: opacity 0.5s; }
+        .recipe-name.show { opacity: 1; }
+
+        .omakase-btn { 
+            width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; 
+            font-weight: 900; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; 
+            font-family: inherit; margin-top: 5px; transition: 0.2s; position: relative; overflow: hidden;
+        }
+        .omakase-btn:hover { background: #fff; color: #000; box-shadow: 0 0 15px var(--accent); }
+        .omakase-btn::after { content:"AUTO-GENERATE"; font-size: 7px; display:block; opacity:0.6; }
+
+        /* Controls */
+        .group { background: #0e0e0e; border: 1px solid #222; padding: 6px 8px; }
+        .group-title { color: #666; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 4px; padding-bottom: 2px; font-size: 9px; text-transform: uppercase; }
+        .ctrl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; }
+        label { color: #999; flex-grow: 1; display: flex; justify-content: space-between; }
+        .val { color: var(--accent); font-weight: bold; font-family: monospace; }
+        .reset-mini { background: transparent; color: #444; border: 1px solid #333; font-size: 8px; cursor: pointer; padding: 0 4px; margin-left: 5px; }
+        .reset-mini:hover { color: var(--accent); border-color: var(--accent); }
+        
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 3px; margin: 4px 0 8px 0; background: #333; }
+
+        /* General Buttons */
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; }
+        .sub-btn { background: #222; color: #888; border: 1px solid #444; padding: 8px; cursor: pointer; font-family: inherit; font-size: 9px; text-transform: uppercase; }
+        .sub-btn:hover { background: #333; color: #fff; }
+
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; box-shadow: 0 0 50px rgba(255, 153, 0, 0.1); }
+        input[type="file"] { width: 100%; background: #000; color: #666; border: 1px solid #333; padding: 8px; box-sizing: border-box; font-size: 9px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h1>PNG DESTROYER</h1>
-    <div style="font-size:9px; color:#444; margin-bottom:10px;">LOOP_SYNC_V14.0</div>
+    <div class="ver">V17.0 // OMAKASE_ENGINE</div>
+    
     <input type="file" id="upload" accept="image/*">
+    
     <div class="master-group">
-        <div class="ctrl-row"><label class="master-label">Global Corruption <span class="val" id="v-master">0</span>%</label></div>
-        <input type="range" id="master" min="0" max="100" value="0" step="1">
+        <div class="ctrl-row">
+            <span class="master-label">Master Corruption</span>
+            <span class="val" id="v-master">50</span>%
+        </div>
+        <div id="recipe-display" class="recipe-name">Ready</div>
+        <input type="range" id="master" min="0" max="100" value="50">
+        <button class="omakase-btn" id="omakase">OMAKASE (AUTO)</button>
     </div>
-    <div class="btn-row">
-        <button id="random">RANDOM</button>
-        <button id="reset-all">RESET ALL</button>
-        <button id="download">SAVE PNG</button>
+
+    <div class="action-row">
+        <button class="sub-btn" id="reset-all">Reset All</button>
+        <button class="sub-btn" id="download">Save PNG</button>
     </div>
+
     <div id="controls"></div>
 </div>
 
@@ -53,69 +83,136 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let originalImageData = null;
 
+    // --- PARAMETER DEFINITIONS ---
     const defs = [
-        {id:'prob',   n:'Trigger Prob.', d:100, min:0, max:100, s:1, c:'1. Signal Destruction'},
-        {id:'stable', n:'Stability',    d:0,   min:0, max:300, s:1, c:'1. Signal Destruction'},
-        {id:'stableJ',n:'Stab. Jitter', d:0,   min:0, max:200, s:1, c:'1. Signal Destruction'},
-        {id:'type',   n:'Filter Mode',  d:1,   min:0, max:4,   s:1, c:'1. Signal Destruction'},
-        {id:'skew',   n:'Stride Skew',  d:0,   min:-100,max:100,s:1, c:'2. Geometry Distortion'},
-        {id:'slide',  n:'Square Slide', d:0,   min:0, max:1000,s:1, c:'2. Geometry Distortion'},
-        {id:'sync',   n:'Scanline Jitter',d:0, min:0, max:100, s:1, c:'2. Geometry Distortion'},
-        {id:'chunk',  n:'Chunk Size',   d:10,  min:1, max:500, s:1, c:'2. Geometry Distortion'},
-        {id:'rgb',    n:'RGB Split',    d:0,   min:0, max:300, s:1, c:'3. Chromatic Chaos'},
-        {id:'echo',   n:'Signal Ghost', d:0,   min:0, max:100, s:1, c:'3. Chromatic Chaos'},
-        {id:'shuffle',n:'Chan. Shuffle',d:0,   min:0, max:5,   s:1, c:'3. Chromatic Chaos'},
-        {id:'flop',   n:'Bit Flop (V)', d:0,   min:0, max:8,   s:1, c:'3. Chromatic Chaos'},
-        {id:'mult',   n:'Overflow Mult',d:1,   min:1, max:10,  s:0.1,c:'4. Binary Erosion'},
-        {id:'bit',    n:'XOR Noise',    d:0,   min:0, max:8,   s:1, c:'4. Binary Erosion'},
-        {id:'crush',  n:'Bit Crush',    d:0,   min:0, max:7,   s:1, c:'4. Binary Erosion'},
-        {id:'melt',   n:'Acid Melt',    d:0,   min:0, max:255, s:1, c:'5. Data Decay'},
-        {id:'sort',   n:'Sort Thresh.', d:0,   min:0, max:255, s:1, c:'5. Data Decay'},
-        {id:'void',   n:'Void Offset',  d:0,   min:-255,max:255,s:1, c:'5. Data Decay'},
-        {id:'inv',    n:'Death Thresh.',d:255, min:0, max:255, s:1, c:'5. Data Decay'}
+        // 1. HARD GEOMETRY
+        {c:'1. Geometry', id:'slide',   n:'Block Shift',   d:0, min:0, max:1000, s:1},
+        {c:'1. Geometry', id:'jaggy',   n:'Sawtooth Skew', d:0, min:-100, max:100, s:1},
+        {c:'1. Geometry', id:'stutter', n:'Line Stutter',  d:0, min:0, max:50, s:1},
+        {c:'1. Geometry', id:'chunk',   n:'Block Size',    d:16, min:1, max:300, s:1},
+        
+        // 2. DATA LOSS
+        {c:'2. Data Loss',id:'prob',    n:'Err Probability',d:100, min:0, max:100, s:1},
+        {c:'2. Data Loss',id:'sync',    n:'H-Sync Loss',   d:0, min:0, max:200, s:1},
+        {c:'2. Data Loss',id:'disp',    n:'Data Displace', d:0, min:0, max:255, s:1},
+        
+        // 3. CHROMATIC
+        {c:'3. Color',    id:'rgb',     n:'RGB Offset',    d:0, min:0, max:200, s:1},
+        {c:'3. Color',    id:'hue',     n:'Hue Rotation',  d:0, min:0, max:360, s:1},
+        {c:'3. Color',    id:'flop',    n:'V-Bit Flop',    d:0, min:0, max:10, s:1},
+
+        // 4. FLOW
+        {c:'4. Flow',     id:'melt',    n:'Smart Melt (Y)',d:0, min:0, max:255, s:1},
+        {c:'4. Flow',     id:'sort',    n:'Pixel Drag (X)',d:0, min:0, max:255, s:1},
+
+        // 5. LOGIC
+        {c:'5. Logic',    id:'crush',   n:'Bit Crush',     d:0, min:0, max:7, s:1},
+        {c:'5. Logic',    id:'bit',     n:'XOR Noise',     d:0, min:0, max:8, s:1},
+        {c:'5. Logic',    id:'inv',     n:'Invert Thresh', d:255, min:0, max:255, s:1},
+        {c:'5. Logic',    id:'void',    n:'Void Level',    d:0, min:-255, max:255, s:1}
     ];
 
     const cfg = {};
-    let masterPower = 0;
+    let masterPower = 0.5; // Default 50%
     const controlContainer = document.getElementById('controls');
-    let currentCat = "";
 
+    // --- UI GENERATION ---
+    let currentCat = "";
     defs.forEach(d => {
-        if(d.c !== currentCat){
+        if(d.c !== currentCat) {
             currentCat = d.c;
-            const title = document.createElement('div');
-            title.className = 'group-title'; title.innerText = d.c;
-            controlContainer.appendChild(title);
+            const t = document.createElement('div');
+            t.className = 'group-title'; t.innerText = d.c;
+            controlContainer.appendChild(t);
         }
         const box = document.createElement('div');
         box.className = 'group';
-        box.innerHTML = `<div class="ctrl-row"><label>${d.n} <span class="val" id="v-${d.id}">${d.d}</span></label>
+        box.innerHTML = `
+            <div class="ctrl-row"><label>${d.n} <span class="val" id="v-${d.id}">${d.d}</span></label>
             <button class="reset-mini" onclick="resetParam('${d.id}', ${d.d})">R</button></div>
-            <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" value="${d.d}" step="${d.s}">`;
+            <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" value="${d.d}" step="${d.s}">
+        `;
         controlContainer.appendChild(box);
         cfg[d.id] = d.d;
+
+        setTimeout(() => {
+            document.getElementById(d.id).oninput = (e) => {
+                cfg[d.id] = parseFloat(e.target.value);
+                document.getElementById(`v-${d.id}`).innerText = cfg[d.id];
+                applyGlitch();
+            };
+        }, 0);
     });
 
+    // --- MASTER & OMAKASE LOGIC ---
     document.getElementById('master').oninput = (e) => {
         masterPower = parseFloat(e.target.value) / 100;
         document.getElementById('v-master').innerText = e.target.value;
         applyGlitch();
     };
 
-    window.resetParam = (id, def) => {
-        const el = document.getElementById(id);
-        el.value = def; cfg[id] = def;
-        document.getElementById(`v-${id}`).innerText = def;
+    const recipes = {
+        analog: { n: "Analog VHS", set: { sync: 20, rgb: 15, jaggy: 5, prob: 40, flop: 2, hue: 10 } },
+        digital: { n: "Data Corruption", set: { slide: 300, chunk: 4, bit: 3, crush: 4, prob: 80 } },
+        liquid: { n: "Acid Melting", set: { melt: 200, sort: 100, disp: 40, hue: 120, prob: 90 } },
+        void: { n: "Deep Void", set: { inv: 100, void: -60, rgb: 50, melt: 50, prob: 70 } },
+        shred: { n: "Paper Shredder", set: { slide: 800, chunk: 2, sync: 100, prob: 60 } },
+        ghost: { n: "Spectral Signal", set: { rgb: 100, disp: 150, melt: 20, prob: 50, inv: 200 } }
+    };
+
+    document.getElementById('omakase').onclick = () => {
+        const keys = Object.keys(recipes);
+        const randKey = keys[Math.floor(Math.random() * keys.length)];
+        const recipe = recipes[randKey];
+        
+        // リセット
+        defs.forEach(d => {
+            cfg[d.id] = d.d;
+            updateUI(d.id, d.d);
+        });
+
+        // 共通ランダム要素 (味付け)
+        // マスターパワーに応じて「荒れ方」の深さを変える
+        // 50%なら普通、100%なら限界突破した値をセットする
+        const intensity = 0.5 + (Math.random() * 0.5); // 0.5 - 1.0 multiplier
+
+        // レシピ適用
+        for (const [key, val] of Object.entries(recipe.set)) {
+            // パラメータ定義を探す
+            const def = defs.find(d => d.id === key);
+            if (!def) continue;
+
+            // ランダムな揺らぎを加える (+- 20%)
+            let finalVal = val * intensity * (0.8 + Math.random() * 0.4);
+            
+            // 範囲制限
+            finalVal = Math.max(def.min, Math.min(def.max, finalVal));
+            finalVal = def.s === 1 ? Math.floor(finalVal) : parseFloat(finalVal.toFixed(1));
+
+            cfg[key] = finalVal;
+            updateUI(key, finalVal);
+        }
+
+        // レシピ名表示アニメーション
+        const disp = document.getElementById('recipe-display');
+        disp.innerText = "Generating: " + recipe.n;
+        disp.classList.remove('show');
+        void disp.offsetWidth; // trigger reflow
+        disp.classList.add('show');
+
         applyGlitch();
     };
 
-    defs.forEach(d => {
-        document.getElementById(d.id).oninput = (e) => {
-            cfg[d.id] = parseFloat(e.target.value);
-            document.getElementById(`v-${d.id}`).innerText = e.target.value;
-            applyGlitch();
-        };
-    });
+    function updateUI(id, val) {
+        document.getElementById(id).value = val;
+        document.getElementById(`v-${id}`).innerText = val;
+    }
+
+    window.resetParam = (id, def) => {
+        updateUI(id, def);
+        cfg[id] = def;
+        applyGlitch();
+    };
 
     document.getElementById('reset-all').onclick = () => {
         document.getElementById('master').value = 0; masterPower = 0;
@@ -123,17 +220,7 @@
         defs.forEach(d => resetParam(d.id, d.d));
     };
 
-    document.getElementById('random').onclick = () => {
-        defs.forEach(d => {
-            const el = document.getElementById(d.id);
-            const r = (Math.random() * (d.max - d.min) + d.min);
-            el.value = d.s === 1 ? Math.floor(r) : r.toFixed(1);
-            cfg[d.id] = parseFloat(el.value);
-            document.getElementById(`v-${d.id}`).innerText = el.value;
-        });
-        applyGlitch();
-    };
-
+    // --- CORE PROCESSING ---
     document.getElementById('upload').onchange = (e) => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
@@ -154,15 +241,14 @@
         canvas.toBlob((blob) => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `PNG_DESTROYER_V14_${Date.now()}.png`;
+            link.download = `PNG_DESTROYER_V17_${Date.now()}.png`;
             link.click();
         }, 'image/png');
     };
 
-    // ヘルパー: 座標x, yを画像サイズw, hに回り込ませ、RGBA配列の先頭インデックスを返す
     function getIdx(x, y, w, h) {
-        const nx = (Math.floor(x) % w + w) % w;
-        const ny = (Math.floor(y) % h + h) % h;
+        const nx = ((Math.floor(x) % w) + w) % w;
+        const ny = ((Math.floor(y) % h) + h) % h;
         return (ny * w + nx) * 4;
     }
 
@@ -171,89 +257,112 @@
         const { width, height, data } = originalImageData;
         const out = new ImageData(new Uint8ClampedArray(data), width, height);
 
+        // Calculate effective values
         const eff = {};
         defs.forEach(d => {
-            const current = cfg[d.id];
-            eff[d.id] = d.d + (current - d.d) * masterPower;
+            eff[d.id] = d.d + (cfg[d.id] - d.d) * masterPower;
         });
 
-        // PASS 1: Horizontal & Binary Reconstruction (Slide, Skew, Sync, Filters)
-        for (let y = 0; y < height; y++) {
-            if (Math.random() * 100 > eff.prob) continue;
+        // Pre-calculation for rotation
+        const rotRad = eff.hue * (Math.PI / 180);
+        const cosR = Math.cos(rotRad), sinR = Math.sin(rotRad);
 
-            const skew = y * (eff.skew / 10);
-            const sync = (y % 2 === 0) ? eff.sync : -eff.sync;
-            const xShift = (Math.floor(y / eff.chunk) % 2 === 0) ? eff.slide : 0;
-            const totalShift = xShift + skew + sync;
+        // --- PASS 1: GEOMETRY ---
+        for (let y = 0; y < height; y++) {
+            // Line Probability
+            if (Math.random() * 100 > eff.prob) {
+                const s = y * width * 4;
+                out.data.set(data.subarray(s, s + width * 4), s);
+                continue; 
+            }
+
+            // Time/Line Stutter
+            let readY = y;
+            if (eff.stutter > 0) {
+                const b = Math.max(1, eff.chunk);
+                if (Math.floor(y / b) % Math.floor(eff.stutter + 1) === 0) {
+                    readY = y - (y % b);
+                }
+            }
+
+            // Offsets
+            const saw = (readY % Math.max(1, eff.chunk * 5)) * (eff.jaggy / 10);
+            const sync = (readY % 2 === 0) ? eff.sync : -eff.sync;
+            const slide = (Math.floor(readY / eff.chunk) % 2 === 0) ? eff.slide : 0;
+            const totalX = slide + saw + sync;
 
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
-                const ti = getIdx(x + totalShift, y, width, height);
                 
-                let r = data[ti], g = data[ti+1], b = data[ti+2];
-
-                // Stability (PNG Filter) - Loop neighboring calculated pixels
-                if (eff.stable > 0) {
-                    const s = (eff.stable + (Math.random()-0.5)*eff.stableJ)/100;
-                    const piX = getIdx(x - 1, y, width, height);
-                    const piY = getIdx(x, y - 1, width, height);
-                    let rr, rg, rb;
-                    if(cfg.type==1) { rr=out.data[piX]; rg=out.data[piX+1]; rb=out.data[piX+2]; }
-                    else if(cfg.type==2) { rr=out.data[piY]; rg=out.data[piY+1]; rb=out.data[piY+2]; }
-                    else if(cfg.type==3) { rr=(out.data[piY]+out.data[piX])/2; rg=(out.data[piY+1]+out.data[piX+1])/2; rb=(out.data[piY+2]+out.data[piX+2])/2; }
-                    else { rr=Math.abs(out.data[piY]-out.data[piX]); rg=Math.abs(out.data[piY+1]-out.data[piX+1]); rb=Math.abs(out.data[piY+2]-out.data[piX+2]); }
-                    r = (r + rr * s) % 256; g = (g + rg * s) % 256; b = (b + rb * s) % 256;
+                // Data Displace (Self-Referencing)
+                let ptrOffset = 0;
+                if (eff.disp > 0) {
+                    const bright = (data[i] + data[i+1] + data[i+2]) / 3;
+                    ptrOffset = (bright / 255) * eff.disp;
                 }
 
+                const ti = getIdx(x + totalX + ptrOffset, readY, width, height);
+                let r = data[ti], g = data[ti+1], b = data[ti+2];
+
+                // Binary Logic
                 if (eff.mult !== 1) { r=(r*eff.mult)%256; g=(g*eff.mult)%256; b=(b*eff.mult)%256; }
                 if (eff.crush > 0) { const m = 0xFF << Math.floor(eff.crush); r&=m; g&=m; b&=m; }
-                if (eff.bit > 0) { r^=(r>>eff.bit); g^=(g>>eff.bit); b^=(b>>eff.bit); }
-                if (eff.flop > 0 && Math.random()*10 < eff.flop) r ^= 0xFF; 
+                if (eff.bit > 0) { const s=Math.floor(eff.bit); r^=(r>>s); g^=(g>>s); b^=(b>>s); }
+                if (eff.flop > 0 && ((x*13 + y*7)%100 < eff.flop*10)) { r=255-r; g=255-g; b=255-b; }
 
                 out.data[i] = r; out.data[i+1] = g; out.data[i+2] = b; out.data[i+3] = 255;
             }
         }
 
-        // PASS 2: Vertical & Sorting (Melt, Sort, RGB, Ghost)
+        // --- PASS 2: FLOW & COLOR ---
         const temp = new Uint8ClampedArray(out.data);
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4;
+        const doMelt = eff.melt > 0;
+        const doSort = eff.sort > 0;
+        const doColor = (eff.rgb > 0 || eff.hue > 0);
 
-                // Acid Melt - Loops vertically
-                if (eff.melt > 0) {
-                    const up = getIdx(x, y - 1, width, height);
-                    if (Math.abs(temp[i] - out.data[up]) < eff.melt) {
-                        out.data[i]=out.data[up]; out.data[i+1]=out.data[up+1]; out.data[i+2]=out.data[up+2];
+        if (doMelt || doSort || doColor || eff.void !== 0 || eff.inv !== 255) {
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    
+                    // Melt (Vertical)
+                    if (doMelt) {
+                        const upIdx = getIdx(x, y - 1, width, height);
+                        const myB = (temp[i]+temp[i+1]+temp[i+2]);
+                        const upB = (out.data[upIdx]+out.data[upIdx+1]+out.data[upIdx+2]);
+                        if (Math.abs(myB - upB) < eff.melt * 3) {
+                            out.data[i]=out.data[upIdx]; out.data[i+1]=out.data[upIdx+1]; out.data[i+2]=out.data[upIdx+2];
+                        }
                     }
-                }
-                // Sort - Loops horizontally
-                if (eff.sort > 0) {
-                    const prev = getIdx(x - 1, y, width, height);
-                    if (Math.abs(out.data[i] - out.data[prev]) < eff.sort) {
-                        out.data[i]=out.data[prev]; out.data[i+1]=out.data[prev+1]; out.data[i+2]=out.data[prev+2];
+                    // Sort (Horizontal)
+                    if (doSort) {
+                        const prevIdx = getIdx(x - 1, y, width, height);
+                        const currVal = out.data[i];
+                        const prevVal = out.data[prevIdx];
+                        if (Math.abs(currVal - prevVal) < eff.sort) {
+                            out.data[i]=prevVal; out.data[i+1]=out.data[prevIdx+1]; out.data[i+2]=out.data[prevIdx+2];
+                        }
                     }
-                }
-                // RGB / Ghost / Shuffle - Fully looped
-                if (eff.rgb > 0 || eff.echo > 0 || cfg.shuffle > 0) {
-                    const shiftX = Math.floor(eff.rgb);
-                    const shiftY = Math.floor(eff.echo / 2);
-                    const ri = getIdx(x + shiftX, y - shiftY, width, height);
-                    const bi = getIdx(x - shiftX, y, width, height);
-                    let r = temp[ri], g = temp[i+1], b = temp[bi+2];
-                    if (cfg.shuffle > 0) {
-                        let c = [r, g, b];
-                        if (cfg.shuffle == 1) c = [r, b, g]; else if (cfg.shuffle == 2) c = [g, r, b];
-                        else if (cfg.shuffle == 3) c = [g, b, r]; else if (cfg.shuffle == 4) c = [b, r, g];
-                        else if (cfg.shuffle == 5) c = [b, g, r];
-                        r = c[0]; g = c[1]; b = c[2];
+                    // Color
+                    if (doColor) {
+                        const split = Math.floor(eff.rgb);
+                        const ri = getIdx(x + split, y, width, height);
+                        const bi = getIdx(x - split, y, width, height);
+                        let r = temp[ri], g = out.data[i+1], b = temp[bi+2]; // Green from current
+
+                        if (eff.hue > 0) {
+                            const nr = r*cosR - g*sinR + b*sinR;
+                            const ng = r*sinR + g*cosR - b*sinR;
+                            const nb = -r*sinR + g*sinR + b*cosR;
+                            r=Math.abs(nr)%255; g=Math.abs(ng)%255; b=Math.abs(nb)%255;
+                        }
+                        out.data[i]=r; out.data[i+1]=g; out.data[i+2]=b;
                     }
-                    out.data[i]=r; out.data[i+1]=g; out.data[i+2]=b;
+                    // Level
+                    let fr=out.data[i]+eff.void, fg=out.data[i+1]+eff.void, fb=out.data[i+2]+eff.void;
+                    if(fr > eff.inv) fr=255-fr; if(fg > eff.inv) fg=255-fg; if(fb > eff.inv) fb=255-fb;
+                    out.data[i]=fr; out.data[i+1]=fg; out.data[i+2]=fb;
                 }
-                // Void & Death
-                let fr=out.data[i]+eff.void, fg=out.data[i+1]+eff.void, fb=out.data[i+2]+eff.void;
-                if(fr > eff.inv) fr=255-fr; if(fg > eff.inv) fg=255-fg; if(fb > eff.inv) fb=255-fb;
-                out.data[i]=fr; out.data[i+1]=fg; out.data[i+2]=fb;
             }
         }
         ctx.putImageData(out, 0, 0);
